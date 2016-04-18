@@ -44,13 +44,13 @@ pub struct Game {
 fn initial_deck() -> Vec<Card> {
     let mut deck: Vec<Card> = vec![];
     for e in expeditions() {
-        for _ in 1..NUM_INVESTMENTS {
+        for _ in 0..NUM_INVESTMENTS {
             deck.push(Card {
                 expedition: e,
                 value: CardValue::Investment,
             });
         }
-        for v in MIN_VALUE..MAX_VALUE {
+        for v in MIN_VALUE..MAX_VALUE+1 {
             deck.push(Card {
                 expedition: e.clone(),
                 value: CardValue::Value(v),
@@ -61,6 +61,10 @@ fn initial_deck() -> Vec<Card> {
 }
 
 impl Game {
+    pub fn new() -> Game {
+        Game::default()
+    }
+
     fn start_round(&mut self) {
         let mut deck = initial_deck();
         thread_rng().shuffle(deck.as_mut_slice());
@@ -89,7 +93,8 @@ mod test {
 
     #[test]
     fn start_works() {
-        let game = &mut Game::default() as &mut BrdgmeGame;
+        let mut game = Game::new();
         assert!(game.start(2).is_ok());
+        assert_eq!(game.deck.len(), 60);
     }
 }
