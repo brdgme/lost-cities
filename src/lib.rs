@@ -81,10 +81,15 @@ impl BrdgmeGame for Game {
         self.start_round();
         Ok(())
     }
+
+    fn command(&mut self, player: usize, input: String) -> Result<(), String> {
+        Ok(())
+    }
 }
 
 pub trait BrdgmeGame {
     fn start(&mut self, players: usize) -> Result<(), String>;
+    fn command(&mut self, player: usize, input: String) -> Result<(), String>;
 }
 
 #[cfg(test)]
