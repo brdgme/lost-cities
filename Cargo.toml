@@ -6,3 +6,4 @@ authors = ["Michael Alexander"]
 [dependencies]
 rand = "0.3.14"
 nom = "1.2.2"
+brdgme = { path = "../brdgme-rs" }

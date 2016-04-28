@@ -1,6 +1,7 @@
 extern crate rand;
 #[macro_use]
 extern crate nom;
+extern crate brdgme;
 
 mod card;
 mod parser;
@@ -92,7 +93,7 @@ impl Game {
     }
 }
 
-impl BrdgmeGame for Game {
+impl brdgme::Game for Game {
     fn start(&mut self, players: usize) -> Result<(), String> {
         if players != PLAYERS {
             return Err("Lost Cities is for 2 players".to_string());
@@ -106,14 +107,10 @@ impl BrdgmeGame for Game {
     }
 }
 
-pub trait BrdgmeGame {
-    fn start(&mut self, players: usize) -> Result<(), String>;
-    fn command(&mut self, player: usize, input: &[u8]) -> Result<(), String>;
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
+    use brdgme::Game as BrdgmeGame;
 
     #[test]
     fn start_works() {
