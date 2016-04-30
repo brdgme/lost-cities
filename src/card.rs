@@ -1,9 +1,10 @@
+#[derive(Copy, Clone)]
 pub enum Value {
     Investment,
     N(usize),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub enum Expedition {
     Red,
     Green,

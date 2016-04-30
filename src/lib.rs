@@ -36,7 +36,7 @@ fn initial_deck() -> Vec<card::Card> {
         }
         for v in MIN_VALUE..MAX_VALUE + 1 {
             deck.push(card::Card {
-                expedition: e.clone(),
+                expedition: e,
                 value: card::Value::N(v),
             });
         }
@@ -51,14 +51,17 @@ impl Game {
 
     fn start_round(&mut self) -> Result<Vec<Log>, String> {
         let mut deck = initial_deck();
+        let mut logs: Vec<Log> = vec![
+            Log::public(format!("Starting round {}", self.round)),
+        ];
         thread_rng().shuffle(deck.as_mut_slice());
         self.deck = deck;
         self.hands = vec![];
         for p in 0..PLAYERS {
             self.hands.push(vec![]);
-            try!(self.draw(p));
+            logs.extend(try!(self.draw(p)));
         }
-        Ok(vec![])
+        Ok(logs)
     }
 
     fn next_round(&mut self) -> Result<Vec<Log>, String> {
