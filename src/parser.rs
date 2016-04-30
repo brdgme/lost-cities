@@ -10,12 +10,11 @@ named!(parse_suit_red< &[u8], card::Expedition >, map_res!(alt!(
     char!('R')
 ), char_to_expedition));
 named!(parse_value< card::Value >, map_res!(char!('x'), char_to_value));
-named!(play_command< &[u8], (&[u8], card::Card) >, tuple!(
+named!(pub play_command< &[u8], (&[u8], card::Card) >, tuple!(
     tag!("play"),
     parse_card
 ));
-named!(draw_command, tag!("draw"));
-// named!(command, alt!(play_command | draw_command));
+named!(pub draw_command, tag!("draw"));
 
 fn char_to_expedition(c: char) -> Result<card::Expedition, String> {
     match c {

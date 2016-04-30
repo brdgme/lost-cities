@@ -7,6 +7,7 @@ mod card;
 mod parser;
 
 use rand::{thread_rng, Rng};
+use brdgme::{Gamer, Log};
 
 const INVESTMENTS: usize = 3;
 const ROUNDS: usize = 3;
@@ -15,7 +16,6 @@ const PLAYERS: usize = 2;
 const MIN_VALUE: usize = 2;
 const MAX_VALUE: usize = 10;
 const HAND_SIZE: usize = 8;
-
 
 #[derive(Default)]
 pub struct Game {
@@ -49,7 +49,7 @@ impl Game {
         Game::default()
     }
 
-    fn start_round(&mut self) -> Result<(), String> {
+    fn start_round(&mut self) -> Result<Vec<Log>, String> {
         let mut deck = initial_deck();
         thread_rng().shuffle(deck.as_mut_slice());
         self.deck = deck;
@@ -58,20 +58,20 @@ impl Game {
             self.hands.push(vec![]);
             try!(self.draw(p));
         }
-        Ok(())
+        Ok(vec![])
     }
 
-    fn next_round(&mut self) -> Result<(), String> {
+    fn next_round(&mut self) -> Result<Vec<Log>, String> {
         if self.round < ROUNDS {
             self.round += 1;
             self.start_round()
         } else {
             // TODO end game log
-            Ok(())
+            Ok(vec![])
         }
     }
 
-    fn draw(&mut self, player: usize) -> Result<(), String> {
+    fn draw(&mut self, player: usize) -> Result<Vec<Log>, String> {
         match self.hands.get_mut(player) {
             Some(hand) => {
                 let mut num = HAND_SIZE - hand.len();
@@ -88,13 +88,13 @@ impl Game {
         if self.deck.len() == 0 {
             self.next_round()
         } else {
-            Ok(())
+            Ok(vec![])
         }
     }
 }
 
-impl brdgme::Game for Game {
-    fn start(&mut self, players: usize) -> Result<(), String> {
+impl Gamer for Game {
+    fn start(&mut self, players: usize) -> Result<Vec<Log>, String> {
         if players != PLAYERS {
             return Err("Lost Cities is for 2 players".to_string());
         }
@@ -102,15 +102,21 @@ impl brdgme::Game for Game {
         self.start_round()
     }
 
-    fn command(&mut self, player: usize, input: &[u8]) -> Result<(), String> {
-        Ok(())
+    fn command(&mut self, _: usize, input: &[u8]) -> Result<Vec<Log>, String> {
+        parser::draw_command(input);
+        parser::play_command(input);
+        Ok(vec![])
+    }
+
+    fn instructions(self, _: usize) -> String {
+        "".to_string()
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use brdgme::Game as BrdgmeGame;
+    use brdgme::Gamer;
 
     #[test]
     fn start_works() {
