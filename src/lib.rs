@@ -16,6 +16,7 @@ const PLAYERS: usize = 2;
 const MIN_VALUE: usize = 2;
 const MAX_VALUE: usize = 10;
 const HAND_SIZE: usize = 8;
+const PLAYER_TEMPLATE: &'static str = include_str!("player.hbs");
 
 #[derive(Default)]
 pub struct Game {
@@ -93,6 +94,10 @@ impl Game {
         } else {
             Ok(vec![])
         }
+    }
+
+    fn player_template(self, player: usize) -> String {
+        PLAYER_TEMPLATE.to_string()
     }
 }
 
