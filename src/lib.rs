@@ -5,9 +5,11 @@ extern crate brdgme;
 
 mod card;
 mod parser;
+mod command;
 
 use rand::{thread_rng, Rng};
 use brdgme::{Gamer, Log};
+use brdgme::error::GameError;
 
 const INVESTMENTS: usize = 3;
 const ROUNDS: usize = 3;
@@ -16,13 +18,26 @@ const PLAYERS: usize = 2;
 const MIN_VALUE: usize = 2;
 const MAX_VALUE: usize = 10;
 const HAND_SIZE: usize = 8;
-const PLAYER_TEMPLATE: &'static str = include_str!("player.hbs");
+
+pub enum Phase {
+    PlayOrDiscard,
+    DrawOrTake,
+}
+
+impl Default for Phase {
+    fn default() -> Phase {
+        Phase::PlayOrDiscard
+    }
+}
 
 #[derive(Default)]
 pub struct Game {
     pub round: usize,
+    pub phase: Phase,
     pub deck: card::Deck,
+    pub discards: card::Deck,
     pub hands: Vec<card::Deck>,
+    pub expeditions: Vec<card::Deck>,
     pub current_player: usize,
 }
 
@@ -50,22 +65,25 @@ impl Game {
         Game::default()
     }
 
-    fn start_round(&mut self) -> Result<Vec<Log>, String> {
+    fn start_round(&mut self) -> Result<Vec<Log>, GameError> {
         let mut deck = initial_deck();
         let mut logs: Vec<Log> = vec![
             Log::public(format!("Starting round {}", self.round)),
         ];
         thread_rng().shuffle(deck.as_mut_slice());
         self.deck = deck;
+        self.discards = vec![];
         self.hands = vec![];
+        self.expeditions = vec![];
         for p in 0..PLAYERS {
             self.hands.push(vec![]);
+            self.expeditions.push(vec![]);
             logs.extend(try!(self.draw(p)));
         }
         Ok(logs)
     }
 
-    fn next_round(&mut self) -> Result<Vec<Log>, String> {
+    fn next_round(&mut self) -> Result<Vec<Log>, GameError> {
         if self.round < ROUNDS {
             self.round += 1;
             self.start_round()
@@ -75,7 +93,13 @@ impl Game {
         }
     }
 
-    fn draw(&mut self, player: usize) -> Result<Vec<Log>, String> {
+    pub fn draw_from_deck(&mut self, player: usize) -> Result<Vec<Log>, GameError> {
+        try!(self.assert_not_finished());
+        try!(self.assert_players_turn(player));
+        self.draw(player)
+    }
+
+    fn draw(&mut self, player: usize) -> Result<Vec<Log>, GameError> {
         match self.hands.get_mut(player) {
             Some(hand) => {
                 let mut num = HAND_SIZE - hand.len();
@@ -87,7 +111,7 @@ impl Game {
                     hand.push(c);
                 }
             }
-            None => return Err("Invalid player number".to_string()),
+            None => return Err(GameError::Internal("Invalid player number".to_string())),
         };
         if self.deck.len() == 0 {
             self.next_round()
@@ -95,29 +119,23 @@ impl Game {
             Ok(vec![])
         }
     }
-
-    fn player_template(self, player: usize) -> String {
-        PLAYER_TEMPLATE.to_string()
-    }
 }
 
 impl Gamer for Game {
-    fn start(&mut self, players: usize) -> Result<Vec<Log>, String> {
+    fn start(&mut self, players: usize) -> Result<Vec<Log>, GameError> {
         if players != PLAYERS {
-            return Err("Lost Cities is for 2 players".to_string());
+            return Err(GameError::PlayerCount(2, 2, players));
         }
         self.round = START_ROUND;
         self.start_round()
     }
 
-    fn command(&mut self, _: usize, input: &[u8]) -> Result<Vec<Log>, String> {
-        parser::draw_command(input);
-        parser::play_command(input);
-        Ok(vec![])
+    fn is_finished(&self) -> bool {
+        self.round >= ROUNDS
     }
 
-    fn instructions(self, _: usize) -> String {
-        "".to_string()
+    fn whose_turn(&self) -> Vec<usize> {
+        vec![self.current_player]
     }
 }
 
