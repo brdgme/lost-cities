@@ -1,20 +1,21 @@
 use card::{Card, Expedition, Value};
 use std::str::FromStr;
+use command::Command;
 
 expedition_red -> Expedition
-  = [rR] { Expedition::Red }
+  = "r"i { Expedition::Red }
 
 expedition_green -> Expedition
-  = [gG] { Expedition::Green }
+  = "g"i { Expedition::Green }
 
 expedition_blue -> Expedition
-  = [bB] { Expedition::Blue }
+  = "b"i { Expedition::Blue }
 
 expedition_white -> Expedition
-  = [wW] { Expedition::White }
+  = "w"i { Expedition::White }
 
 expedition_yellow -> Expedition
-  = [yY] { Expedition::Yellow }
+  = "y"i { Expedition::Yellow }
 
 #[pub]
 expedition -> Expedition
@@ -35,7 +36,7 @@ value_n -> Value
   }
 
 value_investment -> Value
-  = [xX] { Value::Investment }
+  = "x"i { Value::Investment }
 
 #[pub]
 value -> Value
@@ -48,3 +49,22 @@ card -> Card
     expedition: e,
     value: v,
   } }
+
+play_command -> Command
+  = "play"i " "+ c:card { Command::Play(c) }
+
+discard_command -> Command
+  = "discard"i " "+ c:card { Command::Discard(c) }
+
+take_command -> Command
+  = "take"i " "+ e:expedition { Command::Take(e) }
+
+draw_command -> Command
+  = "draw"i { Command::Draw }
+
+#[pub]
+command -> Command
+  = play_command
+  / discard_command
+  / take_command
+  / draw_command
