@@ -1,0 +1,50 @@
+use card::{Card, Expedition, Value};
+use std::str::FromStr;
+
+expedition_red -> Expedition
+  = [rR] { Expedition::Red }
+
+expedition_green -> Expedition
+  = [gG] { Expedition::Green }
+
+expedition_blue -> Expedition
+  = [bB] { Expedition::Blue }
+
+expedition_white -> Expedition
+  = [wW] { Expedition::White }
+
+expedition_yellow -> Expedition
+  = [yY] { Expedition::Yellow }
+
+#[pub]
+expedition -> Expedition
+  = expedition_red
+  / expedition_green
+  / expedition_blue
+  / expedition_white
+  / expedition_yellow
+
+value_n -> Value
+  = [0-9]{1,2} {?
+    let n = usize::from_str(match_str).unwrap();
+    if n >= 2 && n <= 10 {
+      Ok(Value::N(n))
+    } else {
+      Err("card number must be between 2 and 10")
+    }
+  }
+
+value_investment -> Value
+  = [xX] { Value::Investment }
+
+#[pub]
+value -> Value
+  = value_investment
+  / value_n
+
+#[pub]
+card -> Card
+  = e:expedition v:value { Card{
+    expedition: e,
+    value: v,
+  } }

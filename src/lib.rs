@@ -1,9 +1,14 @@
+#![feature(plugin)]
+#![plugin(peg_syntax_ext)]
+
 extern crate rand;
 extern crate brdgme_game;
 extern crate brdgme_color;
 
 mod card;
 mod command;
+
+peg_file! parser("parser.peg");
 
 use card::{Card, Expedition, Value, Deck};
 use rand::{thread_rng, Rng};
