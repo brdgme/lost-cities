@@ -2,6 +2,7 @@ use ::Game;
 use card::{Expedition, Card};
 use brdgme_game::{Commander, Log};
 use brdgme_game::error::GameError;
+use parser;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Command {
@@ -12,8 +13,13 @@ pub enum Command {
 }
 
 impl Commander for Game {
-    fn command(&mut self, _player: usize, _input: &str) -> Result<Vec<Log>, GameError> {
-        return Ok(vec![]);
+    fn command(&mut self, player: usize, input: &str) -> Result<Vec<Log>, GameError> {
+        match try!(parser::command(input)) {
+            Command::Play(c) => self.play(player, c),
+            Command::Discard(c) => self.discard(player, c),
+            Command::Take(e) => self.take(player, e),
+            Command::Draw => self.draw(player),
+        }
     }
 }
 

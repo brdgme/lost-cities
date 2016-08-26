@@ -16,7 +16,7 @@ use brdgme_game::{Gamer, Log};
 use brdgme_game::error::GameError;
 
 const INVESTMENTS: usize = 3;
-const ROUNDS: usize = 3;
+pub const ROUNDS: usize = 3;
 pub const START_ROUND: usize = 1;
 const PLAYERS: usize = 2;
 const MIN_VALUE: usize = 2;
@@ -67,10 +67,6 @@ fn initial_deck() -> Vec<Card> {
 }
 
 impl Game {
-    pub fn new() -> Game {
-        Game::default()
-    }
-
     fn start_round(&mut self) -> Result<Vec<Log>, GameError> {
         let mut logs: Vec<Log> = vec![
             Log::public(format!("Starting round {}", self.round)),
@@ -93,7 +89,7 @@ impl Game {
     }
 
     fn next_round(&mut self) -> Result<Vec<Log>, GameError> {
-        if self.round < ROUNDS {
+        if self.round < START_ROUND + ROUNDS {
             self.round += 1;
             self.start_round()
         } else {
@@ -274,7 +270,7 @@ impl Gamer for Game {
     }
 
     fn is_finished(&self) -> bool {
-        self.round >= ROUNDS
+        self.round >= START_ROUND + ROUNDS
     }
 
     fn winners(&self) -> Vec<usize> {
@@ -297,6 +293,13 @@ impl Gamer for Game {
     }
 }
 
+impl From<parser::ParseError> for GameError {
+    fn from(err: parser::ParseError) -> GameError {
+        use std::error::Error;
+        GameError::InvalidInput(err.description().to_string())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -311,7 +314,7 @@ mod test {
 
     #[test]
     fn start_works() {
-        let mut game = Game::new();
+        let mut game = Game::default();
         game.start(2).unwrap();
         assert_eq!(game.hands.len(), 2);
         assert_eq!(game.hands[0].len(), 8);
@@ -321,7 +324,7 @@ mod test {
 
     #[test]
     fn next_round_works() {
-        let mut game = Game::new();
+        let mut game = Game::default();
         game.start(2).unwrap();
         for _ in 0..22 {
             let c = game.hands[0][0];
@@ -339,8 +342,21 @@ mod test {
     }
 
     #[test]
+    fn game_end_works() {
+        let mut game = Game::default();
+        game.start(2).unwrap();
+        for _ in 0..(44 * ROUNDS) {
+            let p = game.current_player;
+            let c = game.hands[p][0];
+            game.discard(p, c).unwrap();
+            game.draw(p).unwrap();
+        }
+        assert_eq!(game.is_finished(), true);
+    }
+
+    #[test]
     fn play_works() {
-        let mut game = Game::new();
+        let mut game = Game::default();
         game.start(2).unwrap();
         game.hands[0] = vec![
             Card{expedition: Expedition::Green, value: Value::Investment},
