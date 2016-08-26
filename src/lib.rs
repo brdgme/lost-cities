@@ -1,7 +1,4 @@
 extern crate rand;
-#[macro_use]
-extern crate nom;
-extern crate rustc_serialize;
 extern crate brdgme_game;
 extern crate brdgme_color;
 
@@ -21,7 +18,7 @@ const MIN_VALUE: usize = 2;
 const MAX_VALUE: usize = 10;
 const HAND_SIZE: usize = 8;
 
-#[derive(PartialEq, Copy, Clone, RustcDecodable, RustcEncodable, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Phase {
     PlayOrDiscard,
     DrawOrTake,
@@ -33,7 +30,7 @@ impl Default for Phase {
     }
 }
 
-#[derive(Default, RustcDecodable, RustcEncodable, PartialEq, Debug)]
+#[derive(Default, PartialEq, Debug)]
 pub struct Game {
     pub round: usize,
     pub phase: Phase,
@@ -198,11 +195,7 @@ impl Game {
         self.expeditions.get(player).and_then(|e| {
             e.iter()
                 .filter(|c| c.expedition == expedition && c.value != Value::Investment)
-                .map(|c| if let Value::N(n) = c.value {
-                    n
-                } else {
-                    0
-                })
+                .map(|c| if let Value::N(n) = c.value { n } else { 0 })
                 .max()
         })
     }
@@ -400,17 +393,5 @@ mod test {
                       value: Value::N(2),
                   })
             .is_err());
-    }
-
-    #[test]
-    fn encode_and_decode_works() {
-        use rustc_serialize::json;
-
-        let mut game = Game::new();
-        game.start(2).unwrap();
-
-        let encoded = json::encode(&game).unwrap();
-        let decoded: Game = json::decode(&encoded).unwrap();
-        assert_eq!(game, decoded);
     }
 }

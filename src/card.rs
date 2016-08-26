@@ -1,13 +1,13 @@
 use std::fmt;
 use brdgme_color;
 
-#[derive(Copy, Clone, PartialEq, RustcDecodable, RustcEncodable, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Value {
     Investment,
     N(usize),
 }
 
-#[derive(Copy, Clone, PartialEq, RustcDecodable, RustcEncodable, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Expedition {
     Red,
     Green,
@@ -65,7 +65,7 @@ pub fn expeditions() -> Vec<Expedition> {
     ]
 }
 
-#[derive(Copy, Clone, PartialEq, RustcDecodable, RustcEncodable, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Card {
     pub expedition: Expedition,
     pub value: Value,
