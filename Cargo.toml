@@ -7,4 +7,5 @@ authors = ["Michael Alexander"]
 rand = "^0.3.14"
 brdgme-game = { path = "../game" }
 brdgme-color = { path = "../color" }
+brdgme-markup = { path = "../markup" }
 peg = "^0.3.0"

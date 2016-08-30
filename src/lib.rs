@@ -4,9 +4,11 @@
 extern crate rand;
 extern crate brdgme_game;
 extern crate brdgme_color;
+extern crate brdgme_markup;
 
 mod card;
 mod command;
+mod render;
 
 peg_file! parser("parser.peg");
 
