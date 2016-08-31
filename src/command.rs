@@ -13,7 +13,11 @@ pub enum Command {
 }
 
 impl Commander for Game {
-    fn command(&mut self, player: usize, input: &str) -> Result<Vec<Log>, GameError> {
+    fn command(&mut self,
+               player: usize,
+               input: &str,
+               _players: &Vec<String>)
+               -> Result<Vec<Log>, GameError> {
         match try!(parser::command(input)) {
             Command::Play(c) => self.play(player, c),
             Command::Discard(c) => self.discard(player, c),

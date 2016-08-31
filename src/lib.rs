@@ -16,6 +16,7 @@ use card::{Card, Expedition, Value, Deck};
 use rand::{thread_rng, Rng};
 use brdgme_game::{Gamer, Log};
 use brdgme_game::error::GameError;
+use brdgme_markup::ast::Node as N;
 
 const INVESTMENTS: usize = 3;
 pub const ROUNDS: usize = 3;
@@ -71,7 +72,7 @@ fn initial_deck() -> Vec<Card> {
 impl Game {
     fn start_round(&mut self) -> Result<Vec<Log>, GameError> {
         let mut logs: Vec<Log> = vec![
-            Log::public(format!("Starting round {}", self.round)),
+            Log::public(vec![N::Text(format!("Starting round {}", self.round))]),
         ];
         // Grab a new deck and shuffle it.
         let mut deck = initial_deck();
@@ -148,7 +149,7 @@ impl Game {
             self.discards.remove(index);
             self.next_phase();
             Ok(vec![
-                Log::public(format!("{{player {}}} took {}", player, c).to_string()),
+                Log::public(vec![N::Text(format!("{{player {}}} took {}", player, c).to_string())]),
             ])
         } else {
             Err(GameError::InvalidInput("there are no discarded cards for that expedition"
