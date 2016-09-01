@@ -145,7 +145,7 @@ impl Game {
             Ok(vec![Log::public(vec![
                 N::Player(player),
                 N::Text(" took ".to_string()),
-                render::card(c),
+                render::card(&c),
             ])])
         } else {
             Err(GameError::InvalidInput("there are no discarded cards for that expedition"
@@ -162,7 +162,7 @@ impl Game {
                 let index = try!(h.iter()
                     .position(|hc| c == *hc)
                     .ok_or(GameError::InvalidInput(format!("you don't have {}",
-                                                           render::card_text(c)))));
+                                                           render::card_text(&c)))));
                 h.remove(index);
                 Ok(())
             }));
@@ -188,7 +188,7 @@ impl Game {
                 h.iter()
                     .position(|hc| c == *hc)
                     .ok_or(GameError::InvalidInput(format!("you don't have {}",
-                                                           render::card_text(c))))
+                                                           render::card_text(&c))))
             }));
         Ok(())
     }
@@ -213,14 +213,14 @@ impl Game {
                 Value::Investment => {
                     return Err(GameError::InvalidInput(format!("you can't play {} as you've \
                                                                 already played a higher card",
-                                                               render::card_text(c))));
+                                                               render::card_text(&c))));
                 }
                 Value::N(n) => {
                     if n <= hn {
                         return Err(GameError::InvalidInput(format!("you can't play {} as \
                                                                     you've already played a \
                                                                     higher card",
-                                                                   render::card_text(c))));
+                                                                   render::card_text(&c))));
                     }
                 }
             }
@@ -237,6 +237,7 @@ impl Game {
     }
 
     fn draw_hand_full(&mut self, player: usize) -> Result<Vec<Log>, GameError> {
+        let mut logs: Vec<Log> = vec![];
         match self.hands.get_mut(player) {
             Some(hand) => {
                 let mut num = HAND_SIZE - hand.len();
@@ -244,16 +245,43 @@ impl Game {
                 if num > dl {
                     num = dl;
                 }
+                let mut drawn: card::Deck = vec![];
                 for c in self.deck.drain(..num) {
                     hand.push(c);
+                    drawn.push(c);
                 }
+                drawn.sort();
+                let d_len = drawn.len();
+                let mut public_log: Vec<N> = vec![
+                    N::Player(player),
+                    N::Text(" drew ".to_string()),
+                ];
+                if d_len == 1 {
+                    public_log.append(&mut vec![N::Text("a card".to_string())]);
+                } else {
+                    public_log.append(&mut vec![
+                        N::Bold(vec![N::Text(format!("{}", drawn.len()))]),
+                        N::Text(" cards".to_string()),
+                    ]);
+                }
+                public_log.append(&mut vec![
+                    N::Text(", ".to_string()),
+                    N::Bold(vec![N::Text(format!("{}", self.deck.len()))]),
+                    N::Text(" remaining".to_string()),
+                ]);
+                logs.push(Log::public(public_log));
+                let mut private_log: Vec<N> = vec![
+                    N::Text("You drew ".to_string()),
+                ];
+                private_log.append(&mut render::comma_cards(&drawn));
+                logs.push(Log::private(private_log, vec![player]));
             }
             None => return Err(GameError::Internal("invalid player number".to_string())),
         };
         if self.deck.len() == 0 {
             self.next_round()
         } else {
-            Ok(vec![])
+            Ok(logs)
         }
     }
 

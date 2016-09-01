@@ -18,14 +18,25 @@ impl Renderer for Game {
     }
 }
 
-pub fn card(c: Card) -> N {
-    let (e, _) = c;
+pub fn card(c: &Card) -> N {
+    let &(e, _) = c;
     N::Bold(vec![N::Fg(e.color(),
                        vec![
                 N::Text(card_text(c)),
             ])])
 }
 
-pub fn card_text((e, v): Card) -> String {
+pub fn comma_cards(cards: &Vec<Card>) -> Vec<N> {
+    let mut output: Vec<N> = vec![];
+    for c in cards {
+        if output.len() > 0 {
+            output.push(N::Text(", ".to_string()));
+        }
+        output.push(card(c));
+    }
+    output
+}
+
+pub fn card_text(&(e, v): &Card) -> String {
     format!("{}{}", e, v)
 }

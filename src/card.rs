@@ -1,13 +1,13 @@
 use std::fmt;
 use brdgme_color;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord)]
 pub enum Value {
     Investment,
     N(usize),
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord)]
 pub enum Expedition {
     Red,
     Green,
@@ -21,9 +21,9 @@ impl Expedition {
         match *self {
             Expedition::Red => brdgme_color::RED,
             Expedition::Green => brdgme_color::GREEN,
-            Expedition::White => brdgme_color::BLACK,
+            Expedition::White => brdgme_color::GREY,
             Expedition::Blue => brdgme_color::BLUE,
-            Expedition::Yellow => brdgme_color::YELLOW,
+            Expedition::Yellow => brdgme_color::AMBER,
         }
     }
 
