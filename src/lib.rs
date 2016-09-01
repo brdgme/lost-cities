@@ -38,7 +38,7 @@ impl Default for Phase {
     }
 }
 
-#[derive(Default, PartialEq, Debug)]
+#[derive(Default, PartialEq, Debug, Clone)]
 pub struct Game {
     pub round: usize,
     pub phase: Phase,
