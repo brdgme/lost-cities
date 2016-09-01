@@ -65,20 +65,6 @@ pub fn expeditions() -> Vec<Expedition> {
     ]
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub struct Card {
-    pub expedition: Expedition,
-    pub value: Value,
-}
-
-impl fmt::Display for Card {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{{fg {}}}{}{}{{/fg}}",
-               self.expedition.color(),
-               self.expedition,
-               self.value)
-    }
-}
+pub type Card = (Expedition, Value);
 
 pub type Deck = Vec<Card>;

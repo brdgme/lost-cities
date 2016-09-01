@@ -54,16 +54,10 @@ fn initial_deck() -> Vec<Card> {
     let mut deck: Deck = vec![];
     for e in card::expeditions() {
         for _ in 0..INVESTMENTS {
-            deck.push(Card {
-                expedition: e,
-                value: Value::Investment,
-            });
+            deck.push((e, Value::Investment));
         }
         for v in MIN_VALUE..MAX_VALUE + 1 {
-            deck.push(Card {
-                expedition: e,
-                value: Value::N(v),
-            });
+            deck.push((e, Value::N(v)));
         }
     }
     return deck;
@@ -138,7 +132,7 @@ impl Game {
         try!(self.assert_not_finished());
         try!(self.assert_player_turn(player));
         try!(self.assert_phase(Phase::DrawOrTake));
-        if let Some(index) = self.discards.iter().rposition(|ref c| c.expedition == expedition) {
+        if let Some(index) = self.discards.iter().rposition(|&(e, _)| e == expedition) {
             let c = *try!(self.discards
                 .get(index)
                 .ok_or(GameError::Internal("could not find discard card".to_string())));
@@ -148,9 +142,11 @@ impl Game {
                 .push(c);
             self.discards.remove(index);
             self.next_phase();
-            Ok(vec![
-                Log::public(vec![N::Text(format!("{{player {}}} took {}", player, c).to_string())]),
-            ])
+            Ok(vec![Log::public(vec![
+                N::Player(player),
+                N::Text(" took ".to_string()),
+                render::card(c),
+            ])])
         } else {
             Err(GameError::InvalidInput("there are no discarded cards for that expedition"
                 .to_string()))
@@ -165,7 +161,8 @@ impl Game {
             .and_then(|h| {
                 let index = try!(h.iter()
                     .position(|hc| c == *hc)
-                    .ok_or(GameError::InvalidInput(format!("you don't have {}", c))));
+                    .ok_or(GameError::InvalidInput(format!("you don't have {}",
+                                                           render::card_text(c)))));
                 h.remove(index);
                 Ok(())
             }));
@@ -190,7 +187,8 @@ impl Game {
             .and_then(|h| {
                 h.iter()
                     .position(|hc| c == *hc)
-                    .ok_or(GameError::InvalidInput(format!("you don't have {}", c)))
+                    .ok_or(GameError::InvalidInput(format!("you don't have {}",
+                                                           render::card_text(c))))
             }));
         Ok(())
     }
@@ -198,8 +196,8 @@ impl Game {
     fn highest_value_in_expedition(&self, player: usize, expedition: Expedition) -> Option<usize> {
         self.expeditions.get(player).and_then(|e| {
             e.iter()
-                .filter(|c| c.expedition == expedition && c.value != Value::Investment)
-                .map(|c| if let Value::N(n) = c.value { n } else { 0 })
+                .filter(|&c| c.0 == expedition && c.1 != Value::Investment)
+                .map(|&c| if let Value::N(n) = c.1 { n } else { 0 })
                 .max()
         })
     }
@@ -209,19 +207,20 @@ impl Game {
         try!(self.assert_player_turn(player));
         try!(self.assert_phase(Phase::PlayOrDiscard));
         try!(self.assert_has_card(player, c));
-        if let Some(hn) = self.highest_value_in_expedition(player, c.expedition) {
-            match c.value {
+        let (e, v) = c;
+        if let Some(hn) = self.highest_value_in_expedition(player, e) {
+            match v {
                 Value::Investment => {
                     return Err(GameError::InvalidInput(format!("you can't play {} as you've \
                                                                 already played a higher card",
-                                                               c)));
+                                                               render::card_text(c))));
                 }
                 Value::N(n) => {
                     if n <= hn {
                         return Err(GameError::InvalidInput(format!("you can't play {} as \
                                                                     you've already played a \
                                                                     higher card",
-                                                                   c)));
+                                                                   render::card_text(c))));
                     }
                 }
             }

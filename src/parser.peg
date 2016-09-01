@@ -45,10 +45,7 @@ value -> Value
 
 #[pub]
 card -> Card
-  = e:expedition v:value { Card{
-    expedition: e,
-    value: v,
-  } }
+  = e:expedition v:value { (e, v) }
 
 play_command -> Command
   = "play"i " "+ c:card { Command::Play(c) }
