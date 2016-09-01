@@ -48,6 +48,7 @@ pub struct Game {
     pub scores: Vec<Vec<usize>>,
     pub expeditions: Vec<Deck>,
     pub current_player: usize,
+    pub discarded_expedition: Option<Expedition>,
 }
 
 fn initial_deck() -> Vec<Card> {
@@ -82,6 +83,7 @@ impl Game {
             self.expeditions.push(vec![]);
             logs.extend(try!(self.draw_hand_full(p)));
         }
+        self.start_turn();
         Ok(logs)
     }
 
@@ -124,14 +126,23 @@ impl Game {
     }
 
     fn next_player(&mut self) {
-        self.phase = Phase::PlayOrDiscard;
         self.current_player = (self.current_player + 1) % 2;
+        self.start_turn();
+    }
+
+    fn start_turn(&mut self) {
+        self.phase = Phase::PlayOrDiscard;
+        self.discarded_expedition = None;
     }
 
     pub fn take(&mut self, player: usize, expedition: Expedition) -> Result<Vec<Log>, GameError> {
         try!(self.assert_not_finished());
         try!(self.assert_player_turn(player));
         try!(self.assert_phase(Phase::DrawOrTake));
+        if self.discarded_expedition == Some(expedition) {
+            return Err(GameError::InvalidInput("you can't take the same card you just discarded"
+                .to_string()));
+        }
         if let Some(index) = self.discards.iter().rposition(|&(e, _)| e == expedition) {
             let c = *try!(self.discards
                 .get(index)
@@ -151,6 +162,10 @@ impl Game {
             Err(GameError::InvalidInput("there are no discarded cards for that expedition"
                 .to_string()))
         }
+    }
+
+    pub fn available_discard(&self, expedition: Expedition) -> Option<Card> {
+        self.discards.iter().rposition(|&(e, _)| e == expedition).map(|index| self.discards[index])
     }
 
     pub fn remove_player_card(&mut self, player: usize, c: Card) -> Result<(), GameError> {
@@ -175,8 +190,14 @@ impl Game {
         try!(self.assert_phase(Phase::PlayOrDiscard));
         try!(self.remove_player_card(player, c));
         self.discards.push(c);
+        let (e, _) = c;
+        self.discarded_expedition = Some(e);
         self.next_phase();
-        Ok(vec![])
+        Ok(vec![Log::public(vec![
+                N::Player(player),
+                N::Text(" discarded ".to_string()),
+                render::card(&c),
+            ])])
     }
 
     fn assert_has_card(&self, player: usize, c: Card) -> Result<(), GameError> {
@@ -233,7 +254,11 @@ impl Game {
                                                    player))))
             .push(c);
         self.next_phase();
-        Ok(vec![])
+        Ok(vec![Log::public(vec![
+                N::Player(player),
+                N::Text(" played ".to_string()),
+                render::card(&c),
+            ])])
     }
 
     fn draw_hand_full(&mut self, player: usize) -> Result<Vec<Log>, GameError> {
@@ -288,6 +313,10 @@ impl Game {
     fn player_score(&self, player: usize) -> usize {
         self.scores.iter().fold(0, |acc, rs| acc + rs.get(player).unwrap_or(&0))
     }
+}
+
+pub fn opponent(player: usize) -> usize {
+    (player + 1) % 2
 }
 
 impl Gamer for Game {
