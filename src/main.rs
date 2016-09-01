@@ -5,5 +5,5 @@ use brdgme_cmd::repl;
 use lost_cities::Game;
 
 fn main() {
-    repl(&mut Game::default());
+    repl(&Game::default());
 }

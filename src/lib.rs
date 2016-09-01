@@ -61,7 +61,7 @@ fn initial_deck() -> Vec<Card> {
             deck.push((e, Value::N(v)));
         }
     }
-    return deck;
+    deck
 }
 
 impl Game {
@@ -303,7 +303,7 @@ impl Game {
             }
             None => return Err(GameError::Internal("invalid player number".to_string())),
         };
-        if self.deck.len() == 0 {
+        if self.deck.is_empty() {
             self.next_round()
         } else {
             Ok(logs)

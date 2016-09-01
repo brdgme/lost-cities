@@ -51,8 +51,8 @@ impl Game {
 
         // Top half
         let mut top = render_tableau_cards(&self.expeditions[super::opponent(p)],
-                                           vec![N::Fg(GREY,
-                                                      vec![
+                                           &[N::Fg(GREY,
+                                                   vec![
                                                           N::Text("Them".to_string()),
                                                       ])]);
         top.reverse();
@@ -91,8 +91,8 @@ impl Game {
 
         // Bottom half
         rows.append(&mut render_tableau_cards(&self.expeditions[p],
-                                              vec![N::Fg(GREY,
-                                                         vec![
+                                              &[N::Fg(GREY,
+                                                      vec![
                 N::Text("You".to_string()),
             ])]));
         vec![
@@ -101,7 +101,7 @@ impl Game {
     }
 }
 
-fn render_tableau_cards(cards: &Vec<Card>, header: Vec<N>) -> Vec<Row> {
+fn render_tableau_cards(cards: &[Card], header: &[N]) -> Vec<Row> {
     let mut rows: Vec<Row> = vec![];
     let by_exp = by_expedition(cards);
     let mut largest: usize = 1;
@@ -132,12 +132,12 @@ fn render_tableau_cards(cards: &Vec<Card>, header: Vec<N>) -> Vec<Row> {
     rows
 }
 
-fn render_hand(cards: &Vec<Card>) -> Vec<N> {
+fn render_hand(cards: &[Card]) -> Vec<N> {
     let mut output: Vec<N> = vec![];
     let mut sorted = cards.to_owned();
     sorted.sort();
     for c in sorted {
-        if output.len() > 0 {
+        if !output.is_empty() {
             output.push(N::Text(" ".to_string()));
         }
         output.push(card(&c));
@@ -153,10 +153,10 @@ pub fn card(c: &Card) -> N {
             ])])
 }
 
-pub fn comma_cards(cards: &Vec<Card>) -> Vec<N> {
+pub fn comma_cards(cards: &[Card]) -> Vec<N> {
     let mut output: Vec<N> = vec![];
     for c in cards {
-        if output.len() > 0 {
+        if !output.is_empty() {
             output.push(N::Text(", ".to_string()));
         }
         output.push(card(c));

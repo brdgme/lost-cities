@@ -71,7 +71,7 @@ pub type Card = (Expedition, Value);
 
 pub type Deck = Vec<Card>;
 
-pub fn by_expedition(cards: &Vec<Card>) -> HashMap<Expedition, Vec<Card>> {
+pub fn by_expedition(cards: &[Card]) -> HashMap<Expedition, Vec<Card>> {
     let mut output: HashMap<Expedition, Vec<Card>> = HashMap::new();
     for e in expeditions() {
         output.insert(e, of_expedition(cards, e));
@@ -79,6 +79,6 @@ pub fn by_expedition(cards: &Vec<Card>) -> HashMap<Expedition, Vec<Card>> {
     output
 }
 
-pub fn of_expedition(cards: &Vec<Card>, expedition: Expedition) -> Vec<Card> {
+pub fn of_expedition(cards: &[Card], expedition: Expedition) -> Vec<Card> {
     cards.iter().filter(|&&(e, _)| e == expedition).map(|c| c.to_owned()).collect()
 }
