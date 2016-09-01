@@ -30,21 +30,15 @@ impl Commander for Game {
 #[cfg(test)]
 mod test {
     use super::*;
-    use card::{Card, Expedition, Value};
+    use card::{Expedition, Value};
     use parser;
 
     #[test]
     fn command_works() {
         assert_eq!(parser::command("PLaY y8"),
-                   Ok(Command::Play(Card {
-                       expedition: Expedition::Yellow,
-                       value: Value::N(8),
-                   })));
+                   Ok(Command::Play((Expedition::Yellow, Value::N(8)))));
         assert_eq!(parser::command("diSCArd bX"),
-                   Ok(Command::Discard(Card {
-                       expedition: Expedition::Blue,
-                       value: Value::Investment,
-                   })));
+                   Ok(Command::Discard((Expedition::Blue, Value::Investment))));
         assert_eq!(parser::command("tAKE R"),
                    Ok(Command::Take(Expedition::Red)));
         assert_eq!(parser::command("dRaW"), Ok(Command::Draw));

@@ -305,7 +305,7 @@ impl From<parser::ParseError> for GameError {
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::card::{Card, Expedition, Value};
+    use super::card::{Expedition, Value};
     use brdgme_game::Gamer;
 
     fn discard_and_draw(game: &mut Game, player: usize) {
@@ -361,60 +361,36 @@ mod test {
         let mut game = Game::default();
         game.start(2).unwrap();
         game.hands[0] = vec![
-            Card{expedition: Expedition::Green, value: Value::Investment},
-            Card{expedition: Expedition::Green, value: Value::Investment},
-            Card{expedition: Expedition::Green, value: Value::N(2)},
-            Card{expedition: Expedition::Green, value: Value::N(3)},
-            Card{expedition: Expedition::Yellow, value: Value::Investment},
-            Card{expedition: Expedition::Yellow, value: Value::Investment},
-            Card{expedition: Expedition::Yellow, value: Value::N(2)},
-            Card{expedition: Expedition::Yellow, value: Value::N(3)},
+            (Expedition::Green, Value::Investment),
+            (Expedition::Green, Value::Investment),
+            (Expedition::Green, Value::N(2)),
+            (Expedition::Green, Value::N(3)),
+            (Expedition::Yellow, Value::Investment),
+            (Expedition::Yellow, Value::Investment),
+            (Expedition::Yellow, Value::N(2)),
+            (Expedition::Yellow, Value::N(3)),
         ];
-        game.play(0,
-                  Card {
-                      expedition: Expedition::Green,
-                      value: Value::Investment,
-                  })
+        game.play(0, (Expedition::Green, Value::Investment))
             .unwrap();
         game.draw(0).unwrap();
         discard_and_draw(&mut game, 1);
-        game.play(0,
-                  Card {
-                      expedition: Expedition::Green,
-                      value: Value::N(2),
-                  })
+        game.play(0, (Expedition::Green, Value::N(2)))
             .unwrap();
         game.draw(0).unwrap();
         discard_and_draw(&mut game, 1);
         // Shouldn't be able to play GX now.
-        assert!(game.play(0,
-                  Card {
-                      expedition: Expedition::Green,
-                      value: Value::Investment,
-                  })
+        assert!(game.play(0, (Expedition::Green, Value::Investment))
             .is_err());
-        game.play(0,
-                  Card {
-                      expedition: Expedition::Green,
-                      value: Value::N(3),
-                  })
+        game.play(0, (Expedition::Green, Value::N(3)))
             .unwrap();
         game.draw(0).unwrap();
         discard_and_draw(&mut game, 1);
-        game.play(0,
-                  Card {
-                      expedition: Expedition::Yellow,
-                      value: Value::N(3),
-                  })
+        game.play(0, (Expedition::Yellow, Value::N(3)))
             .unwrap();
         game.draw(0).unwrap();
         discard_and_draw(&mut game, 1);
         // Shouldn't be able to play Y2 now.
-        assert!(game.play(0,
-                  Card {
-                      expedition: Expedition::Yellow,
-                      value: Value::N(2),
-                  })
+        assert!(game.play(0, (Expedition::Yellow, Value::N(2)))
             .is_err());
     }
 }
