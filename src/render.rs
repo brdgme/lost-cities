@@ -3,6 +3,7 @@ use std::cmp;
 use super::Game;
 use card::{by_expedition, expeditions, Card};
 
+use brdgme_color::GREY;
 use brdgme_game::{Renderer, GameError};
 use brdgme_markup::ast::{Node as N, Align as A, Row};
 
@@ -27,6 +28,13 @@ impl Renderer for Game {
             // Not a spectator, also show hand.
             layout.append(&mut vec![vec![],
                                     vec![
+                                        (A::Center, vec![
+                                            N::Fg(GREY, vec![
+                                                N::Text("Your hand".to_string())
+                                            ]),
+                                        ]),
+                                        ],
+                                    vec![
                     (A::Center, render_hand(&self.hands[p])),
                 ]]);
         }
@@ -42,7 +50,11 @@ impl Game {
         let mut rows: Vec<Row> = vec![];
 
         // Top half
-        let mut top = render_tableau_cards(&self.expeditions[super::opponent(p)]);
+        let mut top = render_tableau_cards(&self.expeditions[super::opponent(p)],
+                                           vec![N::Fg(GREY,
+                                                      vec![
+                                                          N::Text("Them".to_string()),
+                                                      ])]);
         top.reverse();
         rows.append(&mut top);
 
@@ -50,15 +62,17 @@ impl Game {
         rows.push(vec![]);
 
         // Discards
-        let mut discards: Row = vec![];
+        let mut discards: Row = vec![(A::Right,
+                                      vec![N::Fg(GREY,
+                                                 vec![
+                                      N::Text("Discard".to_string()),
+                                  ])])];
         for e in expeditions() {
-            if discards.len() != 0 {
-                // Column spacing
-                discards.push((A::Left,
-                               vec![
+            // Column spacing
+            discards.push((A::Left,
+                           vec![
                     N::Text("  ".to_string()),
                 ]));
-            }
 
             discards.push((A::Center,
                            vec![if let Some(c) = self.available_discard(e) {
@@ -76,27 +90,33 @@ impl Game {
         rows.push(vec![]);
 
         // Bottom half
-        rows.append(&mut render_tableau_cards(&self.expeditions[p]));
+        rows.append(&mut render_tableau_cards(&self.expeditions[p],
+                                              vec![N::Fg(GREY,
+                                                         vec![
+                N::Text("You".to_string()),
+            ])]));
         vec![
             N::Table(rows),
         ]
     }
 }
 
-fn render_tableau_cards(cards: &Vec<Card>) -> Vec<Row> {
+fn render_tableau_cards(cards: &Vec<Card>, header: Vec<N>) -> Vec<Row> {
     let mut rows: Vec<Row> = vec![];
     let by_exp = by_expedition(cards);
-    let mut largest: usize = 0;
+    let mut largest: usize = 1;
     for e in expeditions() {
         largest = cmp::max(largest, by_exp.get(&e).unwrap_or(&vec![]).len());
     }
     for row_i in 0..largest {
-        let mut row: Row = vec![];
+        let mut row: Row = vec![if row_i == 0 {
+                                    (A::Right, header.to_owned())
+                                } else {
+                                    (A::Left, vec![])
+                                }];
         for e in expeditions() {
-            if row.len() != 0 {
-                // Column spacing
-                row.push((A::Left, vec![]));
-            }
+            // Column spacing
+            row.push((A::Left, vec![]));
             match by_exp.get(&e).unwrap_or(&vec![]).get(row_i) {
                 Some(c) => {
                     row.push((A::Center,
