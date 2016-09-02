@@ -109,8 +109,13 @@ impl Game {
         try!(self.assert_not_finished());
         try!(self.assert_player_turn(player));
         try!(self.assert_phase(Phase::DrawOrTake));
+        let r = self.round;
         let logs = try!(self.draw_hand_full(player));
-        self.next_phase();
+        if r == self.round {
+            // Only run next phase if a new round wasn't started, if a new round
+            // was started then everything will already be initialised.
+            self.next_phase();
+        }
         Ok(logs)
     }
 
@@ -385,14 +390,12 @@ mod test {
     fn next_round_works() {
         let mut game = Game::default();
         game.start(2).unwrap();
-        for _ in 0..22 {
-            let c = game.hands[0][0];
-            game.discard(0, c).unwrap();
-            game.draw(0).unwrap();
-            let c = game.hands[1][0];
-            game.discard(1, c).unwrap();
+        for _ in 0..44 {
+            let p = game.current_player;
+            let c = game.hands[p][0];
+            game.discard(p, c).unwrap();
             assert_eq!(START_ROUND, game.round);
-            game.draw(1).unwrap();
+            game.draw(p).unwrap();
         }
         assert_eq!(START_ROUND + 1, game.round);
         assert_eq!(game.hands[0].len(), 8);
