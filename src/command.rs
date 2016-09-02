@@ -16,7 +16,7 @@ impl Commander for Game {
     fn command(&mut self,
                player: usize,
                input: &str,
-               _players: &Vec<String>)
+               _players: &[String])
                -> Result<Vec<Log>, GameError> {
         match try!(parser::command(input)) {
             Command::Play(c) => self.play(player, c),
