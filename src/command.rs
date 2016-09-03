@@ -18,12 +18,18 @@ impl Commander for Game {
                player: usize,
                input: &str,
                _players: &[String])
-               -> Result<Vec<Log>, GameError> {
+               -> Result<(Vec<Log>, String), GameError> {
         match parser::command().parse(input) {
-            Ok((Command::Play(c), _)) => self.play(player, c),
-            Ok((Command::Discard(c), _)) => self.discard(player, c),
-            Ok((Command::Take(e), _)) => self.take(player, e),
-            Ok((Command::Draw, _)) => self.draw(player),
+            Ok((Command::Play(c), remaining)) => {
+                self.play(player, c).map(|l| (l, remaining.to_string()))
+            }
+            Ok((Command::Discard(c), remaining)) => {
+                self.discard(player, c).map(|l| (l, remaining.to_string()))
+            }
+            Ok((Command::Take(e), remaining)) => {
+                self.take(player, e).map(|l| (l, remaining.to_string()))
+            }
+            Ok((Command::Draw, remaining)) => self.draw(player).map(|l| (l, remaining.to_string())),
             _ => Err(GameError::InvalidInput("nope".to_string())),
         }
     }
