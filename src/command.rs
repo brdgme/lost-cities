@@ -2,6 +2,7 @@ use ::Game;
 use card::{Expedition, Card};
 use brdgme_game::{Commander, Log};
 use brdgme_game::error::GameError;
+use combine::Parser;
 use parser;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -18,7 +19,7 @@ impl Commander for Game {
                input: &str,
                _players: &[String])
                -> Result<Vec<Log>, GameError> {
-        match parser::command(input) {
+        match parser::command().parse(input) {
             Ok((Command::Play(c), _)) => self.play(player, c),
             Ok((Command::Discard(c), _)) => self.discard(player, c),
             Ok((Command::Take(e), _)) => self.take(player, e),

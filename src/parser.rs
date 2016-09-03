@@ -1,20 +1,28 @@
 use combine::{choice, token, Parser, ParserExt, many1, parser, try};
 use combine::char::{digit, string, spaces};
 use combine::primitives::{Stream, ParseResult};
+use combine::combinator::FnParser;
 
 use card::{Expedition, Value, Card};
 use command::Command;
 
-pub fn command<I>(input: I) -> ParseResult<Command, I>
+type FnP<T, I> = FnParser<I, fn(I) -> ParseResult<T, I>>;
+
+pub fn command<I>() -> FnP<Command, I>
     where I: Stream<Item = char>
 {
-    choice([play, discard, take, draw]).parse_state(input)
+    fn command_<I>(input: I) -> ParseResult<Command, I>
+        where I: Stream<Item = char>
+    {
+        choice([play, discard, take, draw]).parse_state(input)
+    }
+    parser(command_)
 }
 
 fn play<I>(input: I) -> ParseResult<Command, I>
     where I: Stream<Item = char>
 {
-    try((string("play"), spaces(), parser(card)))
+    (try(string("play")), spaces(), parser(card))
         .map(|(_, _, c)| Command::Play(c))
         .parse_state(input)
 }
@@ -22,7 +30,7 @@ fn play<I>(input: I) -> ParseResult<Command, I>
 fn discard<I>(input: I) -> ParseResult<Command, I>
     where I: Stream<Item = char>
 {
-    try((string("discard"), spaces(), parser(card)))
+    (try(string("discard")), spaces(), parser(card))
         .map(|(_, _, c)| Command::Discard(c))
         .parse_state(input)
 }
@@ -30,7 +38,7 @@ fn discard<I>(input: I) -> ParseResult<Command, I>
 fn take<I>(input: I) -> ParseResult<Command, I>
     where I: Stream<Item = char>
 {
-    try((string("take"), spaces(), parser(expedition)))
+    (try(string("take")), spaces(), parser(expedition))
         .map(|(_, _, e)| Command::Take(e))
         .parse_state(input)
 }
@@ -107,16 +115,18 @@ fn value_n<I>(input: I) -> ParseResult<Value, I>
 #[cfg(test)]
 mod test {
     use super::*;
+    use combine::Parser;
     use command::Command;
     use card::{Expedition, Value};
 
     #[test]
     fn command_works() {
-        assert_eq!(command("play y8").unwrap().0,
-                   Command::Play((Expedition::Yellow, Value::N(8))));
-        assert_eq!(command("discard bx").unwrap().0,
-                   Command::Discard((Expedition::Blue, Value::Investment)));
-        assert_eq!(command("take r").unwrap().0, Command::Take(Expedition::Red));
-        assert_eq!(command("draw").unwrap().0, Command::Draw);
+        assert_eq!(command().parse("play y8"),
+                   Ok((Command::Play((Expedition::Yellow, Value::N(8))), "")));
+        assert_eq!(command().parse("discard bx"),
+                   Ok((Command::Discard((Expedition::Blue, Value::Investment)), "")));
+        assert_eq!(command().parse("take r"),
+                   Ok((Command::Take(Expedition::Red), "")));
+        assert_eq!(command().parse("draw"), Ok((Command::Draw, "")));
     }
 }
