@@ -1,7 +1,8 @@
-#![feature(plugin)]
-#![plugin(peg_syntax_ext)]
-
 extern crate rand;
+
+#[macro_use]
+extern crate nom;
+
 extern crate brdgme_game;
 extern crate brdgme_color;
 extern crate brdgme_markup;
@@ -9,8 +10,7 @@ extern crate brdgme_markup;
 mod card;
 mod command;
 mod render;
-
-peg_file! parser("parser.peg");
+mod parser;
 
 use card::{Card, Expedition, Value, Deck};
 use rand::{thread_rng, Rng};
@@ -354,13 +354,6 @@ impl Gamer for Game {
 
     fn whose_turn(&self) -> Vec<usize> {
         vec![self.current_player]
-    }
-}
-
-impl From<parser::ParseError> for GameError {
-    fn from(err: parser::ParseError) -> GameError {
-        use std::error::Error;
-        GameError::InvalidInput(err.description().to_string())
     }
 }
 
