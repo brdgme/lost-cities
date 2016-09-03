@@ -1,5 +1,5 @@
-#[macro_use]
-extern crate lazy_static;
+#![feature(plugin, custom_derive)]
+#![plugin(serde_macros)]
 extern crate rand;
 extern crate combine;
 
@@ -26,7 +26,7 @@ const MIN_VALUE: usize = 2;
 const MAX_VALUE: usize = 10;
 const HAND_SIZE: usize = 8;
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum Phase {
     PlayOrDiscard,
     DrawOrTake,
@@ -38,7 +38,7 @@ impl Default for Phase {
     }
 }
 
-#[derive(Default, PartialEq, Debug, Clone)]
+#[derive(Default, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct Game {
     pub round: usize,
     pub phase: Phase,

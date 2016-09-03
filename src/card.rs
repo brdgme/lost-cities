@@ -3,13 +3,13 @@ use std::collections::HashMap;
 
 use brdgme_color;
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Value {
     Investment,
     N(usize),
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum Expedition {
     Red,
     Green,
