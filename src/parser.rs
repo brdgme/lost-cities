@@ -38,7 +38,9 @@ fn discard<I>(input: I) -> ParseResult<Command, I>
 fn take<I>(input: I) -> ParseResult<Command, I>
     where I: Stream<Item = char>
 {
-    (try(string("take")), spaces(), parser(expedition))
+    (try(string("take")),
+     spaces(),
+     parser(expedition).message("expected expedition, eg. 'w' or 'y'"))
         .map(|(_, _, e)| Command::Take(e))
         .parse_state(input)
 }
@@ -54,7 +56,9 @@ fn draw<I>(input: I) -> ParseResult<Command, I>
 fn card<I>(input: I) -> ParseResult<Card, I>
     where I: Stream<Item = char>
 {
-    (parser(expedition), parser(value)).parse_state(input)
+    (parser(expedition), parser(value))
+        .message("expected card, eg. 'wx' or 'r7'")
+        .parse_state(input)
 }
 
 fn expedition<I>(input: I) -> ParseResult<Expedition, I>
