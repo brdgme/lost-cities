@@ -1,7 +1,7 @@
-extern crate rand;
-
 #[macro_use]
-extern crate nom;
+extern crate lazy_static;
+extern crate rand;
+extern crate combine;
 
 extern crate brdgme_game;
 extern crate brdgme_color;

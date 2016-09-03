@@ -1,27 +1,122 @@
+use combine::{choice, token, Parser, ParserExt, many1, parser, try};
+use combine::char::{digit, string, spaces};
+use combine::primitives::{Stream, ParseResult};
+
+use card::{Expedition, Value, Card};
 use command::Command;
-use brdgme_game::GameError;
 
-named!(pub command<&str, Command>, alt!(draw | draw));
+pub fn command<I>(input: I) -> ParseResult<Command, I>
+    where I: Stream<Item = char>
+{
+    choice([play, discard, take, draw]).parse_state(input)
+}
 
-named!(draw<&str, Command>, chain!(
-    tag_s!("draw") ,
-    || { Command::Draw }
-));
+fn play<I>(input: I) -> ParseResult<Command, I>
+    where I: Stream<Item = char>
+{
+    try((string("play"), spaces(), parser(card)))
+        .map(|(_, _, c)| Command::Play(c))
+        .parse_state(input)
+}
+
+fn discard<I>(input: I) -> ParseResult<Command, I>
+    where I: Stream<Item = char>
+{
+    try((string("discard"), spaces(), parser(card)))
+        .map(|(_, _, c)| Command::Discard(c))
+        .parse_state(input)
+}
+
+fn take<I>(input: I) -> ParseResult<Command, I>
+    where I: Stream<Item = char>
+{
+    try((string("take"), spaces(), parser(expedition)))
+        .map(|(_, _, e)| Command::Take(e))
+        .parse_state(input)
+}
+
+fn draw<I>(input: I) -> ParseResult<Command, I>
+    where I: Stream<Item = char>
+{
+    try(string("draw"))
+        .map(|_| Command::Draw)
+        .parse_state(input)
+}
+
+fn card<I>(input: I) -> ParseResult<Card, I>
+    where I: Stream<Item = char>
+{
+    (parser(expedition), parser(value)).parse_state(input)
+}
+
+fn expedition<I>(input: I) -> ParseResult<Expedition, I>
+    where I: Stream<Item = char>
+{
+    choice([expedition_red, expedition_green, expedition_white, expedition_blue, expedition_yellow])
+        .parse_state(input)
+}
+
+fn expedition_red<I>(input: I) -> ParseResult<Expedition, I>
+    where I: Stream<Item = char>
+{
+    choice([token('r'), token('R')]).map(|_| Expedition::Red).parse_state(input)
+}
+
+fn expedition_green<I>(input: I) -> ParseResult<Expedition, I>
+    where I: Stream<Item = char>
+{
+    choice([token('g'), token('G')]).map(|_| Expedition::Green).parse_state(input)
+}
+
+fn expedition_white<I>(input: I) -> ParseResult<Expedition, I>
+    where I: Stream<Item = char>
+{
+    choice([token('w'), token('W')]).map(|_| Expedition::White).parse_state(input)
+}
+
+fn expedition_blue<I>(input: I) -> ParseResult<Expedition, I>
+    where I: Stream<Item = char>
+{
+    choice([token('b'), token('B')]).map(|_| Expedition::Blue).parse_state(input)
+}
+
+fn expedition_yellow<I>(input: I) -> ParseResult<Expedition, I>
+    where I: Stream<Item = char>
+{
+    choice([token('y'), token('Y')]).map(|_| Expedition::Yellow).parse_state(input)
+}
+
+fn value<I>(input: I) -> ParseResult<Value, I>
+    where I: Stream<Item = char>
+{
+    choice([value_investment, value_n]).parse_state(input)
+}
+
+fn value_investment<I>(input: I) -> ParseResult<Value, I>
+    where I: Stream<Item = char>
+{
+    choice([token('x'), token('X')]).map(|_| Value::Investment).parse_state(input)
+}
+
+fn value_n<I>(input: I) -> ParseResult<Value, I>
+    where I: Stream<Item = char>
+{
+    many1(digit()).map(|d: String| Value::N(d.parse::<usize>().unwrap())).parse_state(input)
+}
 
 #[cfg(test)]
 mod test {
     use super::*;
     use command::Command;
     use card::{Expedition, Value};
-    use nom::IResult::*;
 
     #[test]
     fn command_works() {
-        assert_eq!(command("PLaY y8"),
-                   Done("", Command::Play((Expedition::Yellow, Value::N(8)))));
-        assert_eq!(command("diSCArd bX"),
-                   Done("", Command::Discard((Expedition::Blue, Value::Investment))));
-        assert_eq!(command("tAKE R"), Done("", Command::Take(Expedition::Red)));
-        assert_eq!(command("dRaW"), Done("", Command::Draw));
+        assert_eq!(command("play y8").unwrap().0,
+                   Command::Play((Expedition::Yellow, Value::N(8))));
+        assert_eq!(command("discard bx").unwrap().0,
+                   Command::Discard((Expedition::Blue, Value::Investment)));
+        assert_eq!(command("take r").unwrap().0, Command::Take(Expedition::Red));
+        assert_eq!(command("draw").unwrap().0, Command::Draw);
     }
 }
