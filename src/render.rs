@@ -15,10 +15,10 @@ impl Renderer for Game {
         }
         let mut layout: Vec<Row> = vec![vec![(A::Center,
                                               vec![
-                N::Text("Round ".to_string()),
-                N::Bold(vec![N::Text(format!("{}", self.round))]),
-                N::Text(" of ".to_string()),
-                N::Bold(vec![N::Text(format!("{}", super::ROUNDS))]),
+                N::text("Round "),
+                N::Bold(vec![N::text(format!("{}", self.round))]),
+                N::text(" of "),
+                N::Bold(vec![N::text(format!("{}", super::ROUNDS))]),
             ])],
                                         vec![],
                                         vec![
@@ -30,7 +30,7 @@ impl Renderer for Game {
                                     vec![
                                         (A::Center, vec![
                                             N::Fg(GREY, vec![
-                                                N::Text("Your hand".to_string())
+                                                N::text("Your hand")
                                             ]),
                                         ]),
                                         ],
@@ -53,7 +53,7 @@ impl Game {
         let mut top = render_tableau_cards(&self.expeditions[super::opponent(p)],
                                            &[N::Fg(GREY,
                                                    vec![
-                                                          N::Text("Them".to_string()),
+                                                          N::text("Them"),
                                                       ])]);
         top.reverse();
         rows.append(&mut top);
@@ -65,13 +65,13 @@ impl Game {
         let mut discards: Row = vec![(A::Right,
                                       vec![N::Fg(GREY,
                                                  vec![
-                                      N::Text("Discard".to_string()),
+                                      N::text("Discard"),
                                   ])])];
         for e in expeditions() {
             // Column spacing
             discards.push((A::Left,
                            vec![
-                    N::Text("  ".to_string()),
+                    N::text("  "),
                 ]));
 
             discards.push((A::Center,
@@ -80,7 +80,7 @@ impl Game {
                                 } else {
                                     N::Fg(e.color(),
                                           vec![
-                                             N::Text("--".to_string()),
+                                             N::text("--"),
                                          ])
                                 }]));
         }
@@ -93,7 +93,7 @@ impl Game {
         rows.append(&mut render_tableau_cards(&self.expeditions[p],
                                               &[N::Fg(GREY,
                                                       vec![
-                N::Text("You".to_string()),
+                N::text("You"),
             ])]));
         vec![
             N::Table(rows),
@@ -138,7 +138,7 @@ fn render_hand(cards: &[Card]) -> Vec<N> {
     sorted.sort();
     for c in sorted {
         if !output.is_empty() {
-            output.push(N::Text(" ".to_string()));
+            output.push(N::text(" "));
         }
         output.push(card(&c));
     }
@@ -146,10 +146,10 @@ fn render_hand(cards: &[Card]) -> Vec<N> {
 }
 
 pub fn card(c: &Card) -> N {
-    let &(e, _) = c;
+    let e = c.0;
     N::Bold(vec![N::Fg(e.color(),
                        vec![
-                N::Text(card_text(c)),
+                N::text(card_text(c)),
             ])])
 }
 
@@ -157,13 +157,14 @@ pub fn comma_cards(cards: &[Card]) -> Vec<N> {
     let mut output: Vec<N> = vec![];
     for c in cards {
         if !output.is_empty() {
-            output.push(N::Text(", ".to_string()));
+            output.push(N::text(", "));
         }
         output.push(card(c));
     }
     output
 }
 
-pub fn card_text(&(e, v): &Card) -> String {
+pub fn card_text(c: &Card) -> String {
+    let &(e, v) = c;
     format!("{}{}", e, v)
 }

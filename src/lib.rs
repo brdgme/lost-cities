@@ -67,7 +67,7 @@ fn initial_deck() -> Vec<Card> {
 impl Game {
     fn start_round(&mut self) -> Result<Vec<Log>, GameError> {
         let mut logs: Vec<Log> = vec![
-            Log::public(vec![N::Text(format!("Starting round {}", self.round))]),
+            Log::public(vec![N::text(format!("Starting round {}", self.round))]),
         ];
         // Grab a new deck and shuffle it.
         let mut deck = initial_deck();
@@ -160,7 +160,7 @@ impl Game {
             self.next_phase();
             Ok(vec![Log::public(vec![
                 N::Player(player),
-                N::Text(" took ".to_string()),
+                N::text(" took "),
                 render::card(&c),
             ])])
         } else {
@@ -200,7 +200,7 @@ impl Game {
         self.next_phase();
         Ok(vec![Log::public(vec![
                 N::Player(player),
-                N::Text(" discarded ".to_string()),
+                N::text(" discarded "),
                 render::card(&c),
             ])])
     }
@@ -261,7 +261,7 @@ impl Game {
         self.next_phase();
         Ok(vec![Log::public(vec![
                 N::Player(player),
-                N::Text(" played ".to_string()),
+                N::text(" played "),
                 render::card(&c),
             ])])
     }
@@ -284,24 +284,24 @@ impl Game {
                 let d_len = drawn.len();
                 let mut public_log: Vec<N> = vec![
                     N::Player(player),
-                    N::Text(" drew ".to_string()),
+                    N::text(" drew "),
                 ];
                 if d_len == 1 {
-                    public_log.append(&mut vec![N::Text("a card".to_string())]);
+                    public_log.append(&mut vec![N::text("a card")]);
                 } else {
                     public_log.append(&mut vec![
-                        N::Bold(vec![N::Text(format!("{}", drawn.len()))]),
-                        N::Text(" cards".to_string()),
+                        N::Bold(vec![N::text(format!("{}", drawn.len()))]),
+                        N::text(" cards"),
                     ]);
                 }
                 public_log.append(&mut vec![
-                    N::Text(", ".to_string()),
-                    N::Bold(vec![N::Text(format!("{}", self.deck.len()))]),
-                    N::Text(" remaining".to_string()),
+                    N::text(", "),
+                    N::Bold(vec![N::text(format!("{}", self.deck.len()))]),
+                    N::text(" remaining"),
                 ]);
                 logs.push(Log::public(public_log));
                 let mut private_log: Vec<N> = vec![
-                    N::Text("You drew ".to_string()),
+                    N::text("You drew "),
                 ];
                 private_log.append(&mut render::comma_cards(&drawn));
                 logs.push(Log::private(private_log, vec![player]));
