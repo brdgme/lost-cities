@@ -2,6 +2,7 @@
 #![plugin(serde_macros)]
 extern crate rand;
 extern crate combine;
+extern crate serde;
 
 extern crate brdgme_game;
 extern crate brdgme_color;
@@ -49,6 +50,11 @@ pub struct Game {
     pub expeditions: Vec<Deck>,
     pub current_player: usize,
     pub discarded_expedition: Option<Expedition>,
+}
+
+#[derive(Default, Serialize)]
+pub struct PlayerState {
+    pub hand: Deck,
 }
 
 fn initial_deck() -> Vec<Card> {
@@ -325,6 +331,8 @@ pub fn opponent(player: usize) -> usize {
 }
 
 impl Gamer for Game {
+    type PlayerState = PlayerState;
+
     fn start(&mut self, players: usize) -> Result<Vec<Log>, GameError> {
         if players != PLAYERS {
             return Err(GameError::PlayerCount(2, 2, players));
@@ -354,6 +362,10 @@ impl Gamer for Game {
 
     fn whose_turn(&self) -> Vec<usize> {
         vec![self.current_player]
+    }
+
+    fn player_state(&self, _player: Option<usize>) -> Self::PlayerState {
+        PlayerState::default()
     }
 }
 
