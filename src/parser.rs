@@ -4,7 +4,14 @@ use combine::primitives::{Stream, ParseResult};
 use combine::combinator::FnParser;
 
 use card::{Expedition, Value, Card};
-use command::Command;
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum Command {
+    Play(Card),
+    Discard(Card),
+    Take(Expedition),
+    Draw,
+}
 
 type FnP<T, I> = FnParser<I, fn(I) -> ParseResult<T, I>>;
 
@@ -120,7 +127,6 @@ fn value_n<I>(input: I) -> ParseResult<Value, I>
 mod test {
     use super::*;
     use combine::Parser;
-    use command::Command;
     use card::{Expedition, Value};
 
     #[test]

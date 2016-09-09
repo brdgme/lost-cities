@@ -1,18 +1,14 @@
 use std::cmp;
 
-use super::Game;
+use super::PlayerState;
 use card::{by_expedition, expeditions, Card};
 
 use brdgme_color::GREY;
-use brdgme_game::{Renderer, GameError};
+use brdgme_game::Renderer;
 use brdgme_markup::ast::{Node as N, Align as A, Row};
 
-impl Renderer for Game {
-    fn render(&self, player: Option<usize>) -> Result<Vec<N>, GameError> {
-        let persp = player.unwrap_or(0);
-        if persp > 1 {
-            return Err(GameError::Internal("invalid player number".to_string()));
-        }
+impl Renderer for PlayerState {
+    fn render(&self) -> Vec<N> {
         let mut layout: Vec<Row> = vec![vec![(A::Center,
                                               vec![
                 N::text("Round "),
@@ -22,10 +18,9 @@ impl Renderer for Game {
             ])],
                                         vec![],
                                         vec![
-                (A::Center, self.render_tableau(persp)),
+                (A::Center, self.render_tableau()),
             ]];
-        if let Some(p) = player {
-            // Not a spectator, also show hand.
+        if let Some(ref h) = self.hand {
             layout.append(&mut vec![vec![],
                                     vec![
                                         (A::Center, vec![
@@ -35,18 +30,16 @@ impl Renderer for Game {
                                         ]),
                                         ],
                                     vec![
-                    (A::Center, render_hand(&self.hands[p])),
+                    (A::Center, render_hand(&h)),
                 ]]);
         }
-        Ok(vec![
-            N::Table(layout),
-        ])
+        vec![N::Table(layout)]
     }
 }
 
-impl Game {
-    fn render_tableau(&self, player: usize) -> Vec<N> {
-        let p = cmp::min(player, 1);
+impl PlayerState {
+    fn render_tableau(&self) -> Vec<N> {
+        let p = cmp::min(self.player.unwrap_or(0), 1);
         let mut rows: Vec<Row> = vec![];
 
         // Top half
@@ -75,8 +68,8 @@ impl Game {
                 ]));
 
             discards.push((A::Center,
-                           vec![if let Some(c) = self.available_discard(e) {
-                                    card(&c)
+                           vec![if let Some(v) = self.discards.get(&e) {
+                                    card(&(e, *v))
                                 } else {
                                     N::Fg(e.color(),
                                           vec![

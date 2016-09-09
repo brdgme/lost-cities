@@ -9,12 +9,16 @@ extern crate brdgme_color;
 extern crate brdgme_markup;
 
 mod card;
-mod command;
 mod render;
 mod parser;
 
+use std::collections::HashMap;
+
+use combine::Parser;
+
 use card::{Card, Expedition, Value, Deck};
 use rand::{thread_rng, Rng};
+use parser::Command;
 use brdgme_game::{Gamer, Log};
 use brdgme_game::error::GameError;
 use brdgme_markup::ast::Node as N;
@@ -54,7 +58,15 @@ pub struct Game {
 
 #[derive(Default, Serialize)]
 pub struct PlayerState {
-    pub hand: Deck,
+    pub player: Option<usize>,
+    pub round: usize,
+    pub phase: Phase,
+    pub deck_remaining: usize,
+    pub discards: HashMap<Expedition, Value>,
+    pub hand: Option<Deck>,
+    pub scores: Vec<Vec<usize>>,
+    pub expeditions: Vec<Deck>,
+    pub current_player: usize,
 }
 
 fn initial_deck() -> Vec<Card> {
@@ -364,8 +376,52 @@ impl Gamer for Game {
         vec![self.current_player]
     }
 
-    fn player_state(&self, _player: Option<usize>) -> Self::PlayerState {
-        PlayerState::default()
+    fn player_state(&self, player: Option<usize>) -> Self::PlayerState {
+        PlayerState {
+            player: match player {
+                Some(p) if p < 2 => Some(p),
+                _ => None,
+            },
+            round: self.round,
+            phase: self.phase,
+            deck_remaining: self.deck.len(),
+            discards: {
+                let mut d: HashMap<Expedition, Value> = HashMap::new();
+                for e in card::expeditions() {
+                    if let Some(c) = card::last_expedition(&self.discards, e) {
+                        d.insert(e, c.1);
+                    }
+                }
+                d
+            },
+            hand: match player {
+                Some(p) if p < 2 => Some(self.hands[p].clone()),
+                _ => None,
+            },
+            scores: self.scores.clone(),
+            expeditions: self.expeditions.clone(),
+            current_player: self.current_player,
+        }
+    }
+
+    fn command(&mut self,
+               player: usize,
+               input: &str,
+               _players: &[String])
+               -> Result<(Vec<Log>, String), GameError> {
+        match parser::command().parse(input) {
+            Ok((Command::Play(c), remaining)) => {
+                self.play(player, c).map(|l| (l, remaining.to_string()))
+            }
+            Ok((Command::Discard(c), remaining)) => {
+                self.discard(player, c).map(|l| (l, remaining.to_string()))
+            }
+            Ok((Command::Take(e), remaining)) => {
+                self.take(player, e).map(|l| (l, remaining.to_string()))
+            }
+            Ok((Command::Draw, remaining)) => self.draw(player).map(|l| (l, remaining.to_string())),
+            _ => Err(GameError::InvalidInput("nope".to_string())),
+        }
     }
 }
 
