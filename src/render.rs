@@ -46,7 +46,7 @@ impl PlayerState {
         let mut top = render_tableau_cards(&self.expeditions[super::opponent(p)],
                                            &[N::Fg(GREY,
                                                    vec![
-                                                          N::text("Them"),
+                                                          N::text("Them "),
                                                       ])]);
         top.reverse();
         rows.append(&mut top);
@@ -58,7 +58,7 @@ impl PlayerState {
         let mut discards: Row = vec![(A::Right,
                                       vec![N::Fg(GREY,
                                                  vec![
-                                      N::text("Discard"),
+                                      N::text("Discard "),
                                   ])])];
         for e in expeditions() {
             // Column spacing
@@ -77,6 +77,18 @@ impl PlayerState {
                                          ])
                                 }]));
         }
+        discards.push((A::Left,
+                       vec![
+                       N::Fg(GREY, vec![
+
+                       N::text("   "),
+                            N::Bold(vec![
+                N::text(format!("{}", self.deck_remaining)),
+                ]),
+                            N::text(" left"),
+                ]),
+            ]));
+
         rows.push(discards);
 
         // Blank row
@@ -86,7 +98,7 @@ impl PlayerState {
         rows.append(&mut render_tableau_cards(&self.expeditions[p],
                                               &[N::Fg(GREY,
                                                       vec![
-                N::text("You"),
+                N::text("You "),
             ])]));
         vec![
             N::Table(rows),
