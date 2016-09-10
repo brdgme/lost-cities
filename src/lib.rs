@@ -16,7 +16,7 @@ use std::collections::HashMap;
 
 use combine::Parser;
 
-use card::{Card, Expedition, Value, Deck};
+use card::{Card, Expedition, Value, Deck, expeditions};
 use rand::{thread_rng, Rng};
 use parser::Command;
 use brdgme_game::{Gamer, Log};
@@ -50,7 +50,7 @@ pub struct Game {
     pub deck: Deck,
     pub discards: Deck,
     pub hands: Vec<Deck>,
-    pub scores: Vec<Vec<usize>>,
+    pub scores: Vec<Vec<isize>>,
     pub expeditions: Vec<Deck>,
     pub current_player: usize,
     pub discarded_expedition: Option<Expedition>,
@@ -64,7 +64,7 @@ pub struct PlayerState {
     pub deck_remaining: usize,
     pub discards: HashMap<Expedition, Value>,
     pub hand: Option<Deck>,
-    pub scores: Vec<Vec<usize>>,
+    pub scores: Vec<Vec<isize>>,
     pub expeditions: Vec<Deck>,
     pub current_player: usize,
 }
@@ -107,6 +107,15 @@ impl Game {
 
     fn next_round(&mut self) -> Result<Vec<Log>, GameError> {
         if self.round < START_ROUND + ROUNDS {
+            for p in 0..2 {
+                let mut round_score: isize = 0;
+                if let Some(p_exp) = self.expeditions.get(p) {
+                    round_score = score(p_exp);
+                }
+                self.scores
+                    .get_mut(p)
+                    .map(|s| s.push(round_score));
+            }
             self.round += 1;
             self.start_round()
         } else {
@@ -333,7 +342,7 @@ impl Game {
         }
     }
 
-    fn player_score(&self, player: usize) -> usize {
+    fn player_score(&self, player: usize) -> isize {
         self.scores.iter().fold(0, |acc, rs| acc + rs.get(player).unwrap_or(&0))
     }
 }
@@ -350,6 +359,7 @@ impl Gamer for Game {
             return Err(GameError::PlayerCount(2, 2, players));
         }
         self.round = START_ROUND;
+        self.scores = vec![vec![], vec![]];
         self.start_round()
     }
 
@@ -423,6 +433,34 @@ impl Gamer for Game {
             _ => Err(GameError::InvalidInput("nope".to_string())),
         }
     }
+}
+
+pub fn score(cards: &Deck) -> isize {
+    let mut exp_cards: HashMap<Expedition, isize> = HashMap::new();
+    let mut exp_inv: HashMap<Expedition, isize> = HashMap::new();
+    let mut exp_sum: HashMap<Expedition, isize> = HashMap::new();
+    for c in cards {
+        let cards = exp_cards.entry(c.0).or_insert(0);
+        *cards += 1;
+        match c.1 {
+            Value::Investment => {
+                let inv = exp_inv.entry(c.0).or_insert(0);
+                *inv += 1;
+            }
+            Value::N(n) => {
+                let sum = exp_sum.entry(c.0).or_insert(0);
+                *sum += n as isize;
+            }
+        }
+    }
+    expeditions().iter().fold(0, |acc, &e| {
+        let cards = exp_cards.get(&e);
+        if cards == None {
+            return acc;
+        }
+        acc + (exp_sum.get(&e).unwrap_or(&0) - 20) * (exp_inv.get(&e).unwrap_or(&0) + 1) +
+        if cards.unwrap() >= &8 { 20 } else { 0 }
+    })
 }
 
 #[cfg(test)]
@@ -513,5 +551,43 @@ mod test {
         // Shouldn't be able to play Y2 now.
         assert!(game.play(0, (Expedition::Yellow, Value::N(2)))
             .is_err());
+    }
+
+    #[test]
+    fn score_works() {
+        assert_eq!(0, score(&vec![]));
+        assert_eq!(-17,
+                   score(&vec![
+            (Expedition::Red, Value::N(3)),
+            ]));
+        assert_eq!(-34,
+                   score(&vec![
+            (Expedition::Red, Value::N(3)),
+            (Expedition::Green, Value::N(3)),
+            ]));
+        assert_eq!(-30,
+                   score(&vec![
+            (Expedition::Red, Value::N(3)),
+            (Expedition::Green, Value::N(3)),
+            (Expedition::Green, Value::N(4)),
+            ]));
+        assert_eq!(-37,
+                   score(&vec![
+                       (Expedition::Green, Value::Investment),
+            (Expedition::Red, Value::N(3)),
+            (Expedition::Green, Value::N(4)),
+            (Expedition::Green, Value::N(6)),
+            ]));
+        assert_eq!(44,
+                   score(&vec![
+            (Expedition::Green, Value::N(2)),
+            (Expedition::Green, Value::N(3)),
+            (Expedition::Green, Value::N(4)),
+            (Expedition::Green, Value::N(5)),
+            (Expedition::Green, Value::N(6)),
+            (Expedition::Green, Value::N(7)),
+            (Expedition::Green, Value::N(8)),
+            (Expedition::Green, Value::N(9)),
+            ]));
     }
 }

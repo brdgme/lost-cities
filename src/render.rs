@@ -1,6 +1,6 @@
 use std::cmp;
 
-use super::PlayerState;
+use super::{PlayerState, opponent, START_ROUND, ROUNDS};
 use card::{by_expedition, expeditions, Card};
 
 use brdgme_color::GREY;
@@ -33,6 +33,56 @@ impl Renderer for PlayerState {
                     (A::Center, render_hand(&h)),
                 ]]);
         }
+        // Scores
+        let persp = match self.player {
+            Some(p) if p < 2 => p,
+            _ => 0,
+        };
+        let mut scores: Vec<Row> = vec![];
+        let mut header: Row = vec![];
+        for r in START_ROUND..(START_ROUND + ROUNDS) {
+            header.extend(vec![
+                (A::Left, vec![N::text("  ")]),
+                (A::Center,
+                         vec![
+    N::Fg(GREY, vec![N::text(
+        format!("R{}", r),
+    )]),
+    ]),
+    ]);
+        }
+        header.extend(vec![
+                (A::Left, vec![N::text("  ")]),
+                (A::Center,
+                         vec![
+    N::Fg(GREY, vec![N::text("Tot")]),
+    ]),
+    ]);
+        scores.push(header);
+        for p in [persp, opponent(persp)].iter() {
+            let mut score_row: Row = vec![(A::Right, vec![N::Player(*p)])];
+            for r in 0..ROUNDS {
+                score_row.extend(vec![
+                (A::Left, vec![]),
+                (A::Center,
+                         vec![
+                         N::text(self.scores.get(*p)
+                         .and_then(|s| s.get(r)).map(|rs| format!("{}", rs))
+                         .unwrap_or("".to_string()))
+    ]),
+    ]);
+            }
+            score_row.extend(vec![
+                (A::Left, vec![]),
+                (A::Center, vec![N::text(format!("{}", self.player_score(*p)))]),
+            ]);
+            scores.push(score_row);
+        }
+        layout.append(&mut vec![
+            vec![],
+            vec![(A::Center, vec![N::Fg(GREY, vec![N::text("Scores")])])],
+            vec![(A::Center, vec![N::Table(scores)])],
+        ]);
         vec![N::Table(layout)]
     }
 }
@@ -103,6 +153,13 @@ impl PlayerState {
         vec![
             N::Table(rows),
         ]
+    }
+
+    pub fn player_score(&self, player: usize) -> isize {
+        match self.scores.get(player) {
+            Some(s) => s.iter().sum(),
+            None => 0,
+        }
     }
 }
 
