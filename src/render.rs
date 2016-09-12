@@ -94,10 +94,7 @@ impl PlayerState {
 
         // Top half
         let mut top = render_tableau_cards(&self.expeditions[super::opponent(p)],
-                                           &[N::Fg(GREY,
-                                                   vec![
-                                                          N::text("Them "),
-                                                      ])]);
+                                           &N::Player(super::opponent(p)));
         top.reverse();
         rows.append(&mut top);
 
@@ -145,11 +142,7 @@ impl PlayerState {
         rows.push(vec![]);
 
         // Bottom half
-        rows.append(&mut render_tableau_cards(&self.expeditions[p],
-                                              &[N::Fg(GREY,
-                                                      vec![
-                N::text("You "),
-            ])]));
+        rows.append(&mut render_tableau_cards(&self.expeditions[p], &N::Player(p)));
         vec![
             N::Table(rows),
         ]
@@ -163,7 +156,7 @@ impl PlayerState {
     }
 }
 
-fn render_tableau_cards(cards: &[Card], header: &[N]) -> Vec<Row> {
+fn render_tableau_cards(cards: &[Card], header: &N) -> Vec<Row> {
     let mut rows: Vec<Row> = vec![];
     let by_exp = by_expedition(cards);
     let mut largest: usize = 1;
@@ -172,7 +165,7 @@ fn render_tableau_cards(cards: &[Card], header: &[N]) -> Vec<Row> {
     }
     for row_i in 0..largest {
         let mut row: Row = vec![if row_i == 0 {
-                                    (A::Right, header.to_owned())
+                                    (A::Right, vec![header.to_owned(), N::text(" ")])
                                 } else {
                                     (A::Left, vec![])
                                 }];
