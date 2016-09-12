@@ -39,7 +39,7 @@ impl Renderer for PlayerState {
             _ => 0,
         };
         let mut scores: Vec<Row> = vec![];
-        let mut header: Row = vec![];
+        let mut header: Row = vec![(A::Left, vec![])];
         for r in START_ROUND..(START_ROUND + ROUNDS) {
             header.extend(vec![
                 (A::Left, vec![N::text("  ")]),
