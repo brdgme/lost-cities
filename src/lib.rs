@@ -469,7 +469,7 @@ impl Gamer for Game {
                 self.take(player, e).map(|l| (l, remaining.to_string()))
             }
             Ok((Command::Draw, remaining)) => self.draw(player).map(|l| (l, remaining.to_string())),
-            _ => Err(GameError::InvalidInput("nope".to_string())),
+            Err(e) => Err(GameError::InvalidInput(format!("{}", e))),
         }
     }
 }
