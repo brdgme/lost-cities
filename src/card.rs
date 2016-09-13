@@ -69,8 +69,6 @@ pub fn expeditions() -> Vec<Expedition> {
 
 pub type Card = (Expedition, Value);
 
-pub type Deck = Vec<Card>;
-
 pub fn by_expedition(cards: &[Card]) -> HashMap<Expedition, Vec<Card>> {
     let mut output: HashMap<Expedition, Vec<Card>> = HashMap::new();
     for e in expeditions() {
@@ -84,5 +82,5 @@ pub fn of_expedition(cards: &[Card], expedition: Expedition) -> Vec<Card> {
 }
 
 pub fn last_expedition(cards: &[Card], expedition: Expedition) -> Option<Card> {
-    cards.iter().rev().find(|c| c.0 == expedition).map(|ref c| **c)
+    cards.iter().rev().find(|c| c.0 == expedition).cloned()
 }

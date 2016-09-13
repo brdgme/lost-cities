@@ -1,4 +1,4 @@
-#![feature(plugin, custom_derive)]
+#![feature(plugin, custom_derive, slice_patterns)]
 #![plugin(serde_macros)]
 extern crate rand;
 extern crate combine;
@@ -16,7 +16,7 @@ use std::collections::HashMap;
 
 use combine::Parser;
 
-use card::{Card, Expedition, Value, Deck, expeditions};
+use card::{Card, Expedition, Value, expeditions};
 use rand::{thread_rng, Rng};
 use parser::Command;
 use brdgme_game::{Gamer, Log};
@@ -47,11 +47,11 @@ impl Default for Phase {
 pub struct Game {
     pub round: usize,
     pub phase: Phase,
-    pub deck: Deck,
-    pub discards: Deck,
-    pub hands: Vec<Deck>,
+    pub deck: Vec<Card>,
+    pub discards: Vec<Card>,
+    pub hands: Vec<Vec<Card>>,
     pub scores: Vec<Vec<isize>>,
-    pub expeditions: Vec<Deck>,
+    pub expeditions: Vec<Vec<Card>>,
     pub current_player: usize,
     pub discarded_expedition: Option<Expedition>,
 }
@@ -60,17 +60,18 @@ pub struct Game {
 pub struct PlayerState {
     pub player: Option<usize>,
     pub round: usize,
+    pub is_finished: bool,
     pub phase: Phase,
     pub deck_remaining: usize,
     pub discards: HashMap<Expedition, Value>,
-    pub hand: Option<Deck>,
+    pub hand: Option<Vec<Card>>,
     pub scores: Vec<Vec<isize>>,
-    pub expeditions: Vec<Deck>,
+    pub expeditions: Vec<Vec<Card>>,
     pub current_player: usize,
 }
 
 fn initial_deck() -> Vec<Card> {
-    let mut deck: Deck = vec![];
+    let mut deck: Vec<Card> = vec![];
     for e in card::expeditions() {
         for _ in 0..INVESTMENTS {
             deck.push((e, Value::Investment));
@@ -101,27 +102,61 @@ impl Game {
             self.expeditions.push(vec![]);
             logs.extend(try!(self.draw_hand_full(p)));
         }
+        if self.round > START_ROUND {
+            // Player with the most points starts next, otherwise the next player.
+            self.current_player = match self.player_score(0) - self.player_score(1) {
+                0 => opponent(self.current_player),
+                s if s > 0 => 0,
+                _ => 1,
+            }
+        }
         self.start_turn();
         Ok(logs)
     }
 
-    fn next_round(&mut self) -> Result<Vec<Log>, GameError> {
-        if self.round < START_ROUND + ROUNDS {
-            for p in 0..2 {
-                let mut round_score: isize = 0;
-                if let Some(p_exp) = self.expeditions.get(p) {
-                    round_score = score(p_exp);
-                }
-                self.scores
-                    .get_mut(p)
-                    .map(|s| s.push(round_score));
+    fn end_round(&mut self) -> Result<Vec<Log>, GameError> {
+        self.round += 1;
+        let mut logs: Vec<Log> = vec![];
+        for p in 0..2 {
+            let mut round_score: isize = 0;
+            if let Some(p_exp) = self.expeditions.get(p) {
+                round_score = score(p_exp);
             }
-            self.round += 1;
-            self.start_round()
-        } else {
-            // TODO end game log
-            Ok(vec![])
+            self.scores.get_mut(p).map(|s| s.push(round_score));
+            logs.push(Log::public(vec![N::Player(p),
+                                       N::text(" scored "),
+                                       N::Bold(vec![
+                    N::text(format!("{}", round_score)),
+                ]),
+                                       N::text(" points, now on "),
+                                       N::Bold(vec![
+                    N::text(format!("{}", self.player_score(p))),
+                ])]));
         }
+        if self.round < START_ROUND + ROUNDS {
+            self.start_round().map(|l| {
+                logs.extend(l);
+                logs
+            })
+        } else {
+            logs.push(self.game_over_log());
+            Ok(logs)
+        }
+    }
+
+    fn game_over_log(&self) -> Log {
+        let scores: [isize; 2] = [self.player_score(0), self.player_score(1)];
+        let winners = self.winners();
+        Log::public(vec![N::Bold(vec![N::text("The game is over, "),
+                                      match winners.as_slice() {
+                                          &[p] if p < 2 => {
+                                              N::Group(vec![
+                    N::Player(p),
+                    N::text(format!(" won by {} points", scores[p]-scores[opponent(p)])),
+                ])
+                                          }
+                                          _ => N::text(format!("scores tied at {}", scores[0])),
+                                      }])])
     }
 
     fn assert_phase(&self, phase: Phase) -> Result<(), GameError> {
@@ -302,7 +337,7 @@ impl Game {
                 if num > dl {
                     num = dl;
                 }
-                let mut drawn: card::Deck = vec![];
+                let mut drawn: Vec<Card> = vec![];
                 for c in self.deck.drain(..num) {
                     hand.push(c);
                     drawn.push(c);
@@ -336,14 +371,17 @@ impl Game {
             None => return Err(GameError::Internal("invalid player number".to_string())),
         };
         if self.deck.is_empty() {
-            self.next_round()
+            self.end_round()
         } else {
             Ok(logs)
         }
     }
 
     fn player_score(&self, player: usize) -> isize {
-        self.scores.iter().fold(0, |acc, rs| acc + rs.get(player).unwrap_or(&0))
+        match self.scores.get(player) {
+            Some(s) => s.iter().sum(),
+            None => 0,
+        }
     }
 }
 
@@ -393,6 +431,7 @@ impl Gamer for Game {
                 _ => None,
             },
             round: self.round,
+            is_finished: self.is_finished(),
             phase: self.phase,
             deck_remaining: self.deck.len(),
             discards: {
@@ -435,7 +474,7 @@ impl Gamer for Game {
     }
 }
 
-pub fn score(cards: &Deck) -> isize {
+pub fn score(cards: &[Card]) -> isize {
     let mut exp_cards: HashMap<Expedition, isize> = HashMap::new();
     let mut exp_inv: HashMap<Expedition, isize> = HashMap::new();
     let mut exp_sum: HashMap<Expedition, isize> = HashMap::new();
@@ -486,7 +525,7 @@ mod test {
     }
 
     #[test]
-    fn next_round_works() {
+    fn end_round_works() {
         let mut game = Game::default();
         game.start(2).unwrap();
         for _ in 0..44 {

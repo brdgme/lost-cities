@@ -9,17 +9,20 @@ use brdgme_markup::ast::{Node as N, Align as A, Row};
 
 impl Renderer for PlayerState {
     fn render(&self) -> Vec<N> {
-        let mut layout: Vec<Row> = vec![vec![(A::Center,
-                                              vec![
+        let mut layout: Vec<Row> = vec![];
+        if !self.is_finished {
+            layout.extend(vec![vec![(A::Center,
+                                     vec![
                 N::text("Round "),
                 N::Bold(vec![N::text(format!("{}", self.round))]),
                 N::text(" of "),
                 N::Bold(vec![N::text(format!("{}", super::ROUNDS))]),
             ])],
-                                        vec![],
-                                        vec![
+                               vec![]]);
+        }
+        layout.push(vec![
                 (A::Center, self.render_tableau()),
-            ]];
+            ]);
         if let Some(ref h) = self.hand {
             layout.append(&mut vec![vec![],
                                     vec![
@@ -59,7 +62,7 @@ impl Renderer for PlayerState {
     ]),
     ]);
         scores.push(header);
-        for p in [persp, opponent(persp)].iter() {
+        for p in &[persp, opponent(persp)] {
             let mut score_row: Row = vec![(A::Right, vec![N::Player(*p)])];
             for r in 0..ROUNDS {
                 score_row.extend(vec![
