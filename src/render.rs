@@ -96,8 +96,10 @@ impl PlayerState {
         let mut rows: Vec<Row> = vec![];
 
         // Top half
-        let mut top = render_tableau_cards(&self.expeditions[super::opponent(p)],
-                                           &N::Player(super::opponent(p)));
+        let mut top = match self.expeditions.get(super::opponent(p)) {
+            Some(e) => render_tableau_cards(e, &N::Player(super::opponent(p))),
+            None => vec![],
+        };
         top.reverse();
         rows.append(&mut top);
 
@@ -145,7 +147,9 @@ impl PlayerState {
         rows.push(vec![]);
 
         // Bottom half
-        rows.append(&mut render_tableau_cards(&self.expeditions[p], &N::Player(p)));
+        if let Some(e) = self.expeditions.get(p) {
+            rows.append(&mut render_tableau_cards(e, &N::Player(p)));
+        }
         vec![
             N::Table(rows),
         ]

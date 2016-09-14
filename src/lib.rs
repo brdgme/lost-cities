@@ -152,10 +152,14 @@ impl Game {
                                           &[p] if p < 2 => {
                                               N::Group(vec![
                     N::Player(p),
-                    N::text(format!(" won by {} points", scores[p]-scores[opponent(p)])),
+                    N::text(format!(" won by {} points", scores.get(p).unwrap_or(&0)-
+                    scores.get(opponent(p)).unwrap_or(&0))),
                 ])
                                           }
-                                          _ => N::text(format!("scores tied at {}", scores[0])),
+                                          _ => {
+                                              N::text(format!("scores tied at {}",
+                                                              scores.first().unwrap_or(&0)))
+                                          }
                                       }])])
     }
 
@@ -232,7 +236,7 @@ impl Game {
     }
 
     pub fn available_discard(&self, expedition: Expedition) -> Option<Card> {
-        self.discards.iter().rposition(|&(e, _)| e == expedition).map(|index| self.discards[index])
+        self.discards.iter().rev().find(|c| c.0 == expedition).cloned()
     }
 
     pub fn remove_player_card(&mut self, player: usize, c: Card) -> Result<(), GameError> {
@@ -443,10 +447,7 @@ impl Gamer for Game {
                 }
                 d
             },
-            hand: match player {
-                Some(p) if p < 2 => Some(self.hands[p].clone()),
-                _ => None,
-            },
+            hand: player.and_then(|p| self.hands.get(p).cloned()),
             scores: self.scores.clone(),
             expeditions: self.expeditions.clone(),
             current_player: self.current_player,

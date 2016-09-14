@@ -78,7 +78,7 @@ pub fn by_expedition(cards: &[Card]) -> HashMap<Expedition, Vec<Card>> {
 }
 
 pub fn of_expedition(cards: &[Card], expedition: Expedition) -> Vec<Card> {
-    cards.iter().filter(|&&(e, _)| e == expedition).map(|c| c.to_owned()).collect()
+    cards.iter().filter(|c| c.0 == expedition).cloned().collect()
 }
 
 pub fn last_expedition(cards: &[Card], expedition: Expedition) -> Option<Card> {
