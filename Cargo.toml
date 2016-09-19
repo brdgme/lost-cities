@@ -9,6 +9,9 @@ brdgme-game = { path = "../game" }
 brdgme-color = { path = "../color" }
 brdgme-markup = { path = "../markup" }
 brdgme-cmd = { path = "../cmd" }
-combine = "^2.0.0-beta2"
+combine = { git = "https://github.com/Marwes/combine.git" }
 serde = "^0.8.6"
 serde_macros = "^0.8.6"
+
+[replace]
+"aster:0.26.1" = { git = "https://github.com/jchlapinski/aster" }
