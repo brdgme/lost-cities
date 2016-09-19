@@ -48,7 +48,7 @@ fn take<I>(input: I) -> ParseResult<Command, I>
 {
     (try(string_cmp("take", cmp_ignore_case)),
      spaces(),
-     parser(expedition).message("expected expedition, eg. 'w' or 'y'"))
+     parser(expedition).message("Expected expedition, eg. 'W' or 'Y'"))
         .map(|(_, _, e)| Command::Take(e))
         .parse_stream(input)
 }
@@ -65,7 +65,7 @@ fn card<I>(input: I) -> ParseResult<Card, I>
     where I: Stream<Item = char>
 {
     (parser(expedition), parser(value))
-        .message("expected card, eg. 'wx' or 'r7'")
+        .message("Expected card, eg. 'WX' or 'R7'")
         .parse_stream(input)
 }
 
@@ -79,31 +79,31 @@ fn expedition<I>(input: I) -> ParseResult<Expedition, I>
 fn expedition_red<I>(input: I) -> ParseResult<Expedition, I>
     where I: Stream<Item = char>
 {
-    choice([token('r'), token('R')]).map(|_| Expedition::Red).parse_stream(input)
+    choice([token('r'), token('R')]).expected('R').map(|_| Expedition::Red).parse_stream(input)
 }
 
 fn expedition_green<I>(input: I) -> ParseResult<Expedition, I>
     where I: Stream<Item = char>
 {
-    choice([token('g'), token('G')]).map(|_| Expedition::Green).parse_stream(input)
+    choice([token('g'), token('G')]).expected('G').map(|_| Expedition::Green).parse_stream(input)
 }
 
 fn expedition_white<I>(input: I) -> ParseResult<Expedition, I>
     where I: Stream<Item = char>
 {
-    choice([token('w'), token('W')]).map(|_| Expedition::White).parse_stream(input)
+    choice([token('w'), token('W')]).expected('W').map(|_| Expedition::White).parse_stream(input)
 }
 
 fn expedition_blue<I>(input: I) -> ParseResult<Expedition, I>
     where I: Stream<Item = char>
 {
-    choice([token('b'), token('B')]).map(|_| Expedition::Blue).parse_stream(input)
+    choice([token('b'), token('B')]).expected('B').map(|_| Expedition::Blue).parse_stream(input)
 }
 
 fn expedition_yellow<I>(input: I) -> ParseResult<Expedition, I>
     where I: Stream<Item = char>
 {
-    choice([token('y'), token('Y')]).map(|_| Expedition::Yellow).parse_stream(input)
+    choice([token('y'), token('Y')]).expected('Y').map(|_| Expedition::Yellow).parse_stream(input)
 }
 
 fn value<I>(input: I) -> ParseResult<Value, I>
@@ -115,7 +115,7 @@ fn value<I>(input: I) -> ParseResult<Value, I>
 fn value_investment<I>(input: I) -> ParseResult<Value, I>
     where I: Stream<Item = char>
 {
-    choice([token('x'), token('X')]).map(|_| Value::Investment).parse_stream(input)
+    choice([token('x'), token('X')]).expected('X').map(|_| Value::Investment).parse_stream(input)
 }
 
 fn value_n<I>(input: I) -> ParseResult<Value, I>

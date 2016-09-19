@@ -167,7 +167,7 @@ impl Game {
         if phase == self.phase {
             Ok(())
         } else {
-            Err(GameError::InvalidInput("not the right phase".to_string()))
+            Err(GameError::InvalidInput("Not the right phase".to_string()))
         }
     }
 
@@ -211,7 +211,7 @@ impl Game {
         try!(self.assert_player_turn(player));
         try!(self.assert_phase(Phase::DrawOrTake));
         if self.discarded_expedition == Some(expedition) {
-            return Err(GameError::InvalidInput("you can't take the same card you just discarded"
+            return Err(GameError::InvalidInput("You can't take the same card you just discarded"
                 .to_string()));
         }
         if let Some(index) = self.discards.iter().rposition(|&(e, _)| e == expedition) {
@@ -230,7 +230,7 @@ impl Game {
                 render::card(&c),
             ])])
         } else {
-            Err(GameError::InvalidInput("there are no discarded cards for that expedition"
+            Err(GameError::InvalidInput("There are no discarded cards for that expedition"
                 .to_string()))
         }
     }
@@ -247,7 +247,7 @@ impl Game {
             .and_then(|h| {
                 let index = try!(h.iter()
                     .position(|hc| c == *hc)
-                    .ok_or(GameError::InvalidInput(format!("you don't have {}",
+                    .ok_or(GameError::InvalidInput(format!("You don't have {}",
                                                            render::card_text(&c)))));
                 h.remove(index);
                 Ok(())
@@ -279,7 +279,7 @@ impl Game {
             .and_then(|h| {
                 h.iter()
                     .position(|hc| c == *hc)
-                    .ok_or(GameError::InvalidInput(format!("you don't have {}",
+                    .ok_or(GameError::InvalidInput(format!("You don't have {}",
                                                            render::card_text(&c))))
             }));
         Ok(())
@@ -303,13 +303,13 @@ impl Game {
         if let Some(hn) = self.highest_value_in_expedition(player, e) {
             match v {
                 Value::Investment => {
-                    return Err(GameError::InvalidInput(format!("you can't play {} as you've \
+                    return Err(GameError::InvalidInput(format!("You can't play {} as you've \
                                                                 already played a higher card",
                                                                render::card_text(&c))));
                 }
                 Value::N(n) => {
                     if n <= hn {
-                        return Err(GameError::InvalidInput(format!("you can't play {} as \
+                        return Err(GameError::InvalidInput(format!("You can't play {} as \
                                                                     you've already played a \
                                                                     higher card",
                                                                    render::card_text(&c))));
@@ -470,7 +470,7 @@ impl Gamer for Game {
                 self.take(player, e).map(|l| (l, remaining.to_string()))
             }
             Ok((Command::Draw, remaining)) => self.draw(player).map(|l| (l, remaining.to_string())),
-            Err(e) => Err(GameError::InvalidInput(format!("{}", e))),
+            Err(e) => Err(brdgme_game::parser::to_game_error(e)),
         }
     }
 }
