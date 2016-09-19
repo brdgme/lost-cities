@@ -3,9 +3,8 @@ use combine::char::{digit, spaces, string_cmp};
 use combine::primitives::{Stream, ParseResult};
 use combine::combinator::FnParser;
 
+use brdgme_game::parser::cmp_ignore_case;
 use card::{Expedition, Value, Card};
-
-use std::ascii::AsciiExt;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Command {
@@ -16,10 +15,6 @@ pub enum Command {
 }
 
 type FnP<T, I> = FnParser<I, fn(I) -> ParseResult<T, I>>;
-
-fn cmp_ignore_case(l: char, r: char) -> bool {
-    l.eq_ignore_ascii_case(&r)
-}
 
 pub fn command<I>() -> FnP<Command, I>
     where I: Stream<Item = char>
