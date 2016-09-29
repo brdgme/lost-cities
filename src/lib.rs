@@ -1,8 +1,9 @@
-#![feature(plugin, custom_derive, slice_patterns)]
-#![plugin(serde_macros)]
+#![feature(rustc_macro, slice_patterns, structural_match, rustc_attrs)]
+
 extern crate rand;
 extern crate combine;
-extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 
 extern crate brdgme_game;
 extern crate brdgme_color;
