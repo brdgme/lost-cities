@@ -1,4 +1,4 @@
-#![feature(rustc_macro, slice_patterns, structural_match, rustc_attrs)]
+#![feature(proc_macro, slice_patterns, structural_match, rustc_attrs)]
 
 extern crate rand;
 extern crate combine;
