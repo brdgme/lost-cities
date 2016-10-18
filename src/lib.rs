@@ -58,7 +58,7 @@ pub struct Game {
 }
 
 #[derive(Default, Serialize)]
-pub struct PlayerState {
+pub struct PubState {
     pub player: Option<usize>,
     pub round: usize,
     pub is_finished: bool,
@@ -395,7 +395,7 @@ pub fn opponent(player: usize) -> usize {
 }
 
 impl Gamer for Game {
-    type PlayerState = PlayerState;
+    type PubState = PubState;
 
     fn start(&mut self, players: usize) -> Result<Vec<Log>, GameError> {
         if players != PLAYERS {
@@ -429,8 +429,8 @@ impl Gamer for Game {
         vec![self.current_player]
     }
 
-    fn player_state(&self, player: Option<usize>) -> Self::PlayerState {
-        PlayerState {
+    fn pub_state(&self, player: Option<usize>) -> Self::PubState {
+        PubState {
             player: match player {
                 Some(p) if p < 2 => Some(p),
                 _ => None,

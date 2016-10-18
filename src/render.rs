@@ -1,13 +1,13 @@
 use std::cmp;
 
-use super::{PlayerState, opponent, START_ROUND, ROUNDS};
+use super::{PubState, opponent, START_ROUND, ROUNDS};
 use card::{by_expedition, expeditions, Card};
 
 use brdgme_color::GREY;
 use brdgme_game::Renderer;
 use brdgme_markup::ast::{Node as N, Align as A, Row};
 
-impl Renderer for PlayerState {
+impl Renderer for PubState {
     fn render(&self) -> Vec<N> {
         let mut layout: Vec<Row> = vec![];
         if !self.is_finished {
@@ -90,7 +90,7 @@ impl Renderer for PlayerState {
     }
 }
 
-impl PlayerState {
+impl PubState {
     fn render_tableau(&self) -> Vec<N> {
         let p = cmp::min(self.player.unwrap_or(0), 1);
         let mut rows: Vec<Row> = vec![];
