@@ -12,29 +12,18 @@ impl Renderer for PubState {
         let mut layout: Vec<Row> = vec![];
         if !self.is_finished {
             layout.extend(vec![vec![(A::Center,
-                                     vec![
-                N::text("Round "),
-                N::Bold(vec![N::text(format!("{}", self.round))]),
-                N::text(" of "),
-                N::Bold(vec![N::text(format!("{}", super::ROUNDS))]),
-            ])],
+                                     vec![N::text("Round "),
+                                          N::Bold(vec![N::text(format!("{}", self.round))]),
+                                          N::text(" of "),
+                                          N::Bold(vec![N::text(format!("{}", super::ROUNDS))])])],
                                vec![]]);
         }
-        layout.push(vec![
-                (A::Center, self.render_tableau()),
-            ]);
+        layout.push(vec![(A::Center, self.render_tableau())]);
         if let Some(ref h) = self.hand {
             layout.append(&mut vec![vec![],
-                                    vec![
-                                        (A::Center, vec![
-                                            N::Fg(GREY, vec![
-                                                N::text("Your hand")
-                                            ]),
-                                        ]),
-                                        ],
-                                    vec![
-                    (A::Center, render_hand(&h)),
-                ]]);
+                                    vec![(A::Center,
+                                          vec![N::Fg(GREY, vec![N::text("Your hand")])])],
+                                    vec![(A::Center, render_hand(&h))]]);
         }
         // Scores
         let persp = match self.player {
@@ -44,48 +33,31 @@ impl Renderer for PubState {
         let mut scores: Vec<Row> = vec![];
         let mut header: Row = vec![(A::Left, vec![])];
         for r in START_ROUND..(START_ROUND + ROUNDS) {
-            header.extend(vec![
-                (A::Left, vec![N::text("  ")]),
-                (A::Center,
-                         vec![
-    N::Fg(GREY, vec![N::text(
-        format!("R{}", r),
-    )]),
-    ]),
-    ]);
+            header.extend(vec![(A::Left, vec![N::text("  ")]),
+                               (A::Center, vec![N::Fg(GREY, vec![N::text(format!("R{}", r))])])]);
         }
-        header.extend(vec![
-                (A::Left, vec![N::text("  ")]),
-                (A::Center,
-                         vec![
-    N::Fg(GREY, vec![N::text("Tot")]),
-    ]),
-    ]);
+        header.extend(vec![(A::Left, vec![N::text("  ")]),
+                           (A::Center, vec![N::Fg(GREY, vec![N::text("Tot")])])]);
         scores.push(header);
         for p in &[persp, opponent(persp)] {
             let mut score_row: Row = vec![(A::Right, vec![N::Player(*p)])];
             for r in 0..ROUNDS {
-                score_row.extend(vec![
-                (A::Left, vec![]),
-                (A::Center,
-                         vec![
-                         N::text(self.scores.get(*p)
-                         .and_then(|s| s.get(r)).map(|rs| format!("{}", rs))
-                         .unwrap_or("".to_string()))
-    ]),
-    ]);
+                score_row.extend(vec![(A::Left, vec![]),
+                                      (A::Center,
+                                       vec![N::text(self.scores
+                                                .get(*p)
+                                                .and_then(|s| s.get(r))
+                                                .map(|rs| format!("{}", rs))
+                                                .unwrap_or("".to_string()))])]);
             }
-            score_row.extend(vec![
-                (A::Left, vec![]),
-                (A::Center, vec![N::text(format!("{}", self.player_score(*p)))]),
-            ]);
+            score_row.extend(vec![(A::Left, vec![]),
+                                  (A::Center,
+                                   vec![N::text(format!("{}", self.player_score(*p)))])]);
             scores.push(score_row);
         }
-        layout.append(&mut vec![
-            vec![],
-            vec![(A::Center, vec![N::Fg(GREY, vec![N::text("Scores")])])],
-            vec![(A::Center, vec![N::Table(scores)])],
-        ]);
+        layout.append(&mut vec![vec![],
+                                vec![(A::Center, vec![N::Fg(GREY, vec![N::text("Scores")])])],
+                                vec![(A::Center, vec![N::Table(scores)])]]);
         vec![N::Table(layout)]
     }
 }
@@ -107,39 +79,24 @@ impl PubState {
         rows.push(vec![]);
 
         // Discards
-        let mut discards: Row = vec![(A::Right,
-                                      vec![N::Fg(GREY,
-                                                 vec![
-                                      N::text("Discard "),
-                                  ])])];
+        let mut discards: Row = vec![(A::Right, vec![N::Fg(GREY, vec![N::text("Discard ")])])];
         for e in expeditions() {
             // Column spacing
-            discards.push((A::Left,
-                           vec![
-                    N::text("  "),
-                ]));
+            discards.push((A::Left, vec![N::text("  ")]));
 
             discards.push((A::Center,
                            vec![if let Some(v) = self.discards.get(&e) {
                                     card(&(e, *v))
                                 } else {
-                                    N::Fg(e.color(),
-                                          vec![
-                                             N::text("--"),
-                                         ])
+                                    N::Fg(e.color(), vec![N::text("--")])
                                 }]));
         }
         discards.push((A::Left,
-                       vec![
-                       N::Fg(GREY, vec![
-
-                       N::text("   "),
-                            N::Bold(vec![
-                N::text(format!("{}", self.deck_remaining)),
-                ]),
-                            N::text(" left"),
-                ]),
-            ]));
+                       vec![N::Fg(GREY,
+                                  vec![N::text("   "),
+                                       N::Bold(vec![N::text(format!("{}",
+                                                                    self.deck_remaining))]),
+                                       N::text(" left")])]));
 
         rows.push(discards);
 
@@ -150,9 +107,7 @@ impl PubState {
         if let Some(e) = self.expeditions.get(p) {
             rows.append(&mut render_tableau_cards(e, &N::Player(p)));
         }
-        vec![
-            N::Table(rows),
-        ]
+        vec![N::Table(rows)]
     }
 
     pub fn player_score(&self, player: usize) -> isize {
@@ -180,12 +135,7 @@ fn render_tableau_cards(cards: &[Card], header: &N) -> Vec<Row> {
             // Column spacing
             row.push((A::Left, vec![]));
             match by_exp.get(&e).unwrap_or(&vec![]).get(row_i) {
-                Some(c) => {
-                    row.push((A::Center,
-                              vec![
-                                  card(c),
-                              ]))
-                }
+                Some(c) => row.push((A::Center, vec![card(c)])),
                 None => row.push((A::Left, vec![])),
             }
         }
@@ -209,10 +159,7 @@ fn render_hand(cards: &[Card]) -> Vec<N> {
 
 pub fn card(c: &Card) -> N {
     let e = c.0;
-    N::Bold(vec![N::Fg(e.color(),
-                       vec![
-                N::text(card_text(c)),
-            ])])
+    N::Bold(vec![N::Fg(e.color(), vec![N::text(card_text(c))])])
 }
 
 pub fn comma_cards(cards: &[Card]) -> Vec<N> {

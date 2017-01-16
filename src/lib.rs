@@ -1,4 +1,4 @@
-#![feature(proc_macro, slice_patterns, structural_match, rustc_attrs)]
+#![feature(slice_patterns, structural_match, rustc_attrs)]
 
 extern crate rand;
 extern crate combine;
@@ -86,9 +86,8 @@ fn initial_deck() -> Vec<Card> {
 
 impl Game {
     fn start_round(&mut self) -> Result<Vec<Log>, GameError> {
-        let mut logs: Vec<Log> = vec![
-            Log::public(vec![N::text(format!("Starting round {}", self.round))]),
-        ];
+        let mut logs: Vec<Log> = vec![Log::public(vec![N::text(format!("Starting round {}",
+                                                                       self.round))])];
         // Grab a new deck and shuffle it.
         let mut deck = initial_deck();
         thread_rng().shuffle(deck.as_mut_slice());
@@ -101,7 +100,7 @@ impl Game {
         for p in 0..PLAYERS {
             self.hands.push(vec![]);
             self.expeditions.push(vec![]);
-            logs.extend(try!(self.draw_hand_full(p)));
+            logs.extend(self.draw_hand_full(p)?);
         }
         if self.round > START_ROUND {
             // Player with the most points starts next, otherwise the next player.
@@ -126,13 +125,10 @@ impl Game {
             self.scores.get_mut(p).map(|s| s.push(round_score));
             logs.push(Log::public(vec![N::Player(p),
                                        N::text(" scored "),
-                                       N::Bold(vec![
-                    N::text(format!("{}", round_score)),
-                ]),
+                                       N::Bold(vec![N::text(format!("{}", round_score))]),
                                        N::text(" points, now on "),
-                                       N::Bold(vec![
-                    N::text(format!("{}", self.player_score(p))),
-                ])]));
+                                       N::Bold(vec![N::text(format!("{}",
+                                                                    self.player_score(p)))])]));
         }
         if self.round < START_ROUND + ROUNDS {
             self.start_round().map(|l| {
@@ -173,11 +169,11 @@ impl Game {
     }
 
     pub fn draw(&mut self, player: usize) -> Result<Vec<Log>, GameError> {
-        try!(self.assert_not_finished());
-        try!(self.assert_player_turn(player));
-        try!(self.assert_phase(Phase::DrawOrTake));
+        self.assert_not_finished()?;
+        self.assert_player_turn(player)?;
+        self.assert_phase(Phase::DrawOrTake)?;
         let r = self.round;
-        let logs = try!(self.draw_hand_full(player));
+        let logs = self.draw_hand_full(player)?;
         if r == self.round {
             // Only run next phase if a new round wasn't started, if a new round
             // was started then everything will already be initialised.
@@ -208,28 +204,24 @@ impl Game {
     }
 
     pub fn take(&mut self, player: usize, expedition: Expedition) -> Result<Vec<Log>, GameError> {
-        try!(self.assert_not_finished());
-        try!(self.assert_player_turn(player));
-        try!(self.assert_phase(Phase::DrawOrTake));
+        self.assert_not_finished()?;
+        self.assert_player_turn(player)?;
+        self.assert_phase(Phase::DrawOrTake)?;
         if self.discarded_expedition == Some(expedition) {
             return Err(GameError::InvalidInput("You can't take the same card you just discarded"
                 .to_string()));
         }
         if let Some(index) = self.discards.iter().rposition(|&(e, _)| e == expedition) {
-            let c = *try!(self.discards
+            let c = *self.discards
                 .get(index)
-                .ok_or(GameError::Internal("could not find discard card".to_string())));
-            try!(self.hands
-                    .get_mut(player)
-                    .ok_or(GameError::Internal("could not find player hand".to_string())))
+                .ok_or_else(|| GameError::Internal("could not find discard card".to_string()))?;
+            self.hands
+                .get_mut(player)
+                .ok_or_else(|| GameError::Internal("could not find player hand".to_string()))?
                 .push(c);
             self.discards.remove(index);
             self.next_phase();
-            Ok(vec![Log::public(vec![
-                N::Player(player),
-                N::text(" took "),
-                render::card(&c),
-            ])])
+            Ok(vec![Log::public(vec![N::Player(player), N::text(" took "), render::card(&c)])])
         } else {
             Err(GameError::InvalidInput("There are no discarded cards for that expedition"
                 .to_string()))
@@ -241,48 +233,48 @@ impl Game {
     }
 
     pub fn remove_player_card(&mut self, player: usize, c: Card) -> Result<(), GameError> {
-        try!(self.hands
+        self.hands
             .get_mut(player)
-            .ok_or(GameError::Internal(format!("could not find player hand for player {}",
-                                               player)))
+            .ok_or_else(|| {
+                GameError::Internal(format!("could not find player hand for player {}", player))
+            })
             .and_then(|h| {
-                let index = try!(h.iter()
+                let index = h.iter()
                     .position(|hc| c == *hc)
-                    .ok_or(GameError::InvalidInput(format!("You don't have {}",
-                                                           render::card_text(&c)))));
+                    .ok_or_else(|| {
+                        GameError::InvalidInput(format!("You don't have {}", render::card_text(&c)))
+                    })?;
                 h.remove(index);
                 Ok(())
-            }));
+            })?;
         Ok(())
     }
 
     pub fn discard(&mut self, player: usize, c: Card) -> Result<Vec<Log>, GameError> {
-        try!(self.assert_not_finished());
-        try!(self.assert_player_turn(player));
-        try!(self.assert_phase(Phase::PlayOrDiscard));
-        try!(self.remove_player_card(player, c));
+        self.assert_not_finished()?;
+        self.assert_player_turn(player)?;
+        self.assert_phase(Phase::PlayOrDiscard)?;
+        self.remove_player_card(player, c)?;
         self.discards.push(c);
         let (e, _) = c;
         self.discarded_expedition = Some(e);
         self.next_phase();
-        Ok(vec![Log::public(vec![
-                N::Player(player),
-                N::text(" discarded "),
-                render::card(&c),
-            ])])
+        Ok(vec![Log::public(vec![N::Player(player), N::text(" discarded "), render::card(&c)])])
     }
 
     fn assert_has_card(&self, player: usize, c: Card) -> Result<(), GameError> {
-        try!(self.hands
+        self.hands
             .get(player)
-            .ok_or(GameError::Internal(format!("could not find player hand for player {}",
-                                               player)))
+            .ok_or_else(|| {
+                GameError::Internal(format!("could not find player hand for player {}", player))
+            })
             .and_then(|h| {
                 h.iter()
                     .position(|hc| c == *hc)
-                    .ok_or(GameError::InvalidInput(format!("You don't have {}",
-                                                           render::card_text(&c))))
-            }));
+                    .ok_or_else(|| {
+                        GameError::InvalidInput(format!("You don't have {}", render::card_text(&c)))
+                    })
+            })?;
         Ok(())
     }
 
@@ -296,10 +288,10 @@ impl Game {
     }
 
     pub fn play(&mut self, player: usize, c: Card) -> Result<Vec<Log>, GameError> {
-        try!(self.assert_not_finished());
-        try!(self.assert_player_turn(player));
-        try!(self.assert_phase(Phase::PlayOrDiscard));
-        try!(self.assert_has_card(player, c));
+        self.assert_not_finished()?;
+        self.assert_player_turn(player)?;
+        self.assert_phase(Phase::PlayOrDiscard)?;
+        self.assert_has_card(player, c)?;
         let (e, v) = c;
         if let Some(hn) = self.highest_value_in_expedition(player, e) {
             match v {
@@ -318,19 +310,16 @@ impl Game {
                 }
             }
         }
-        try!(self.remove_player_card(player, c));
-        try!(self.expeditions
-                .get_mut(player)
-                .ok_or(GameError::Internal(format!("could not find player expedition for \
-                                                    player {}",
-                                                   player))))
+        self.remove_player_card(player, c)?;
+        self.expeditions
+            .get_mut(player)
+            .ok_or_else(|| {
+                GameError::Internal(format!("could not find player expedition for player {}",
+                                            player))
+            })?
             .push(c);
         self.next_phase();
-        Ok(vec![Log::public(vec![
-                N::Player(player),
-                N::text(" played "),
-                render::card(&c),
-            ])])
+        Ok(vec![Log::public(vec![N::Player(player), N::text(" played "), render::card(&c)])])
     }
 
     fn draw_hand_full(&mut self, player: usize) -> Result<Vec<Log>, GameError> {
@@ -349,27 +338,20 @@ impl Game {
                 }
                 drawn.sort();
                 let d_len = drawn.len();
-                let mut public_log: Vec<N> = vec![
-                    N::Player(player),
-                    N::text(" drew "),
-                ];
+                let mut public_log: Vec<N> = vec![N::Player(player), N::text(" drew ")];
                 if d_len == 1 {
                     public_log.append(&mut vec![N::text("a card")]);
                 } else {
-                    public_log.append(&mut vec![
-                        N::Bold(vec![N::text(format!("{}", drawn.len()))]),
-                        N::text(" cards"),
-                    ]);
+                    public_log.append(&mut vec![N::Bold(vec![N::text(format!("{}",
+                                                                             drawn.len()))]),
+                                                N::text(" cards")]);
                 }
-                public_log.append(&mut vec![
-                    N::text(", "),
-                    N::Bold(vec![N::text(format!("{}", self.deck.len()))]),
-                    N::text(" remaining"),
-                ]);
+                public_log.append(&mut vec![N::text(", "),
+                                            N::Bold(vec![N::text(format!("{}",
+                                                                         self.deck.len()))]),
+                                            N::text(" remaining")]);
                 logs.push(Log::public(public_log));
-                let mut private_log: Vec<N> = vec![
-                    N::text("You drew "),
-                ];
+                let mut private_log: Vec<N> = vec![N::text("You drew ")];
                 private_log.append(&mut render::comma_cards(&drawn));
                 logs.push(Log::private(private_log, vec![player]));
             }
@@ -560,16 +542,14 @@ mod test {
     fn play_works() {
         let mut game = Game::default();
         game.start(2).unwrap();
-        game.hands[0] = vec![
-            (Expedition::Green, Value::Investment),
-            (Expedition::Green, Value::Investment),
-            (Expedition::Green, Value::N(2)),
-            (Expedition::Green, Value::N(3)),
-            (Expedition::Yellow, Value::Investment),
-            (Expedition::Yellow, Value::Investment),
-            (Expedition::Yellow, Value::N(2)),
-            (Expedition::Yellow, Value::N(3)),
-        ];
+        game.hands[0] = vec![(Expedition::Green, Value::Investment),
+                             (Expedition::Green, Value::Investment),
+                             (Expedition::Green, Value::N(2)),
+                             (Expedition::Green, Value::N(3)),
+                             (Expedition::Yellow, Value::Investment),
+                             (Expedition::Yellow, Value::Investment),
+                             (Expedition::Yellow, Value::N(2)),
+                             (Expedition::Yellow, Value::N(3))];
         game.play(0, (Expedition::Green, Value::Investment))
             .unwrap();
         game.draw(0).unwrap();
@@ -597,38 +577,26 @@ mod test {
     #[test]
     fn score_works() {
         assert_eq!(0, score(&vec![]));
-        assert_eq!(-17,
-                   score(&vec![
-            (Expedition::Red, Value::N(3)),
-            ]));
+        assert_eq!(-17, score(&vec![(Expedition::Red, Value::N(3))]));
         assert_eq!(-34,
-                   score(&vec![
-            (Expedition::Red, Value::N(3)),
-            (Expedition::Green, Value::N(3)),
-            ]));
+                   score(&vec![(Expedition::Red, Value::N(3)), (Expedition::Green, Value::N(3))]));
         assert_eq!(-30,
-                   score(&vec![
-            (Expedition::Red, Value::N(3)),
-            (Expedition::Green, Value::N(3)),
-            (Expedition::Green, Value::N(4)),
-            ]));
+                   score(&vec![(Expedition::Red, Value::N(3)),
+                               (Expedition::Green, Value::N(3)),
+                               (Expedition::Green, Value::N(4))]));
         assert_eq!(-37,
-                   score(&vec![
-                       (Expedition::Green, Value::Investment),
-            (Expedition::Red, Value::N(3)),
-            (Expedition::Green, Value::N(4)),
-            (Expedition::Green, Value::N(6)),
-            ]));
+                   score(&vec![(Expedition::Green, Value::Investment),
+                               (Expedition::Red, Value::N(3)),
+                               (Expedition::Green, Value::N(4)),
+                               (Expedition::Green, Value::N(6))]));
         assert_eq!(44,
-                   score(&vec![
-            (Expedition::Green, Value::N(2)),
-            (Expedition::Green, Value::N(3)),
-            (Expedition::Green, Value::N(4)),
-            (Expedition::Green, Value::N(5)),
-            (Expedition::Green, Value::N(6)),
-            (Expedition::Green, Value::N(7)),
-            (Expedition::Green, Value::N(8)),
-            (Expedition::Green, Value::N(9)),
-            ]));
+                   score(&vec![(Expedition::Green, Value::N(2)),
+                               (Expedition::Green, Value::N(3)),
+                               (Expedition::Green, Value::N(4)),
+                               (Expedition::Green, Value::N(5)),
+                               (Expedition::Green, Value::N(6)),
+                               (Expedition::Green, Value::N(7)),
+                               (Expedition::Green, Value::N(8)),
+                               (Expedition::Green, Value::N(9))]));
     }
 }

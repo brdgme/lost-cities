@@ -58,13 +58,11 @@ impl fmt::Display for Value {
 }
 
 pub fn expeditions() -> Vec<Expedition> {
-    vec![
-        Expedition::Red,
-        Expedition::Green,
-        Expedition::White,
-        Expedition::Blue,
-        Expedition::Yellow,
-    ]
+    vec![Expedition::Red,
+         Expedition::Green,
+         Expedition::White,
+         Expedition::Blue,
+         Expedition::Yellow]
 }
 
 pub type Card = (Expedition, Value);
