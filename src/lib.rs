@@ -1,5 +1,3 @@
-#![feature(slice_patterns, structural_match, rustc_attrs)]
-
 extern crate rand;
 extern crate combine;
 #[macro_use]
@@ -146,7 +144,8 @@ impl Game {
         let winners = self.winners();
         Log::public(vec![N::Bold(vec![N::text("The game is over, "),
                                       match winners.as_slice() {
-                                          &[p] if p < 2 => {
+                                          w if w.len() == 1 => {
+                                              let p = w[0];
                                               N::Group(vec![
                     N::Player(p),
                     N::text(format!(" won by {} points", scores.get(p).unwrap_or(&0)-
