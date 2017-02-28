@@ -142,21 +142,18 @@ impl Game {
     fn game_over_log(&self) -> Log {
         let scores: [isize; 2] = [self.player_score(0), self.player_score(1)];
         let winners = self.winners();
-        Log::public(vec![N::Bold(vec![N::text("The game is over, "),
-                                      match winners.as_slice() {
-                                          w if w.len() == 1 => {
-                                              let p = w[0];
-                                              N::Group(vec![
-                    N::Player(p),
-                    N::text(format!(" won by {} points", scores.get(p).unwrap_or(&0)-
-                    scores.get(opponent(p)).unwrap_or(&0))),
-                ])
-                                          }
-                                          _ => {
-                                              N::text(format!("scores tied at {}",
-                                                              scores.first().unwrap_or(&0)))
-                                          }
-                                      }])])
+        let mut log_text = vec![N::text("The game is over, ")];
+        log_text.extend(match winners.as_slice() {
+            w if w.len() == 1 => {
+                let p = w[0];
+                vec![N::Player(p),
+                     N::text(format!(" won by {} points",
+                                     scores.get(p).unwrap_or(&0) -
+                                     scores.get(opponent(p)).unwrap_or(&0)))]
+            }
+            _ => vec![N::text(format!("scores tied at {}", scores.first().unwrap_or(&0)))],
+        });
+        Log::public(vec![N::Bold(log_text)])
     }
 
     fn assert_phase(&self, phase: Phase) -> Result<(), GameError> {
