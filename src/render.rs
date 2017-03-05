@@ -5,7 +5,7 @@ use card::{by_expedition, expeditions, Card};
 
 use brdgme_color::GREY;
 use brdgme_game::Renderer;
-use brdgme_markup::ast::{Node as N, Align as A, Row};
+use brdgme_markup::{Node as N, Align as A, Row};
 
 impl Renderer for PubState {
     fn render(&self) -> Vec<N> {

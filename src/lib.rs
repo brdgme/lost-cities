@@ -20,7 +20,7 @@ use rand::{thread_rng, Rng};
 use parser::Command;
 use brdgme_game::{Gamer, Log};
 use brdgme_game::error::GameError;
-use brdgme_markup::ast::Node as N;
+use brdgme_markup::Node as N;
 
 const INVESTMENTS: usize = 3;
 pub const ROUNDS: usize = 3;
