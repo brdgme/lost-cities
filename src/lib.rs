@@ -449,7 +449,7 @@ impl Gamer for Game {
                 self.take(player, e).map(|l| (l, remaining.to_string()))
             }
             Ok((Command::Draw, remaining)) => self.draw(player).map(|l| (l, remaining.to_string())),
-            Err(e) => Err(brdgme_game::parser::to_game_error(e)),
+            Err(e) => Err(brdgme_game::parser::to_game_error(&e)),
         }
     }
 }
