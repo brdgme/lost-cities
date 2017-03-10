@@ -49,16 +49,14 @@ fn take<I>(input: I) -> ParseResult<Command, I>
     (try(string_cmp("take", cmp_ignore_case)),
      spaces(),
      parser(expedition).message("Expected expedition, eg. 'W' or 'Y'"))
-        .map(|(_, _, e)| Command::Take(e))
-        .parse_stream(input)
+            .map(|(_, _, e)| Command::Take(e))
+            .parse_stream(input)
 }
 
 fn draw<I>(input: I) -> ParseResult<Command, I>
     where I: Stream<Item = char>
 {
-    try(string_cmp("draw", cmp_ignore_case))
-        .map(|_| Command::Draw)
-        .parse_stream(input)
+    try(string_cmp("draw", cmp_ignore_case)).map(|_| Command::Draw).parse_stream(input)
 }
 
 fn card<I>(input: I) -> ParseResult<Card, I>

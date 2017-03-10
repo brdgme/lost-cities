@@ -45,10 +45,10 @@ impl Renderer for PubState {
                 score_row.extend(vec![(A::Left, vec![]),
                                       (A::Center,
                                        vec![N::text(self.scores
-                                                .get(*p)
-                                                .and_then(|s| s.get(r))
-                                                .map(|rs| format!("{}", rs))
-                                                .unwrap_or("".to_string()))])]);
+                                                        .get(*p)
+                                                        .and_then(|s| s.get(r))
+                                                        .map(|rs| format!("{}", rs))
+                                                        .unwrap_or("".to_string()))])]);
             }
             score_row.extend(vec![(A::Left, vec![]),
                                   (A::Center,
