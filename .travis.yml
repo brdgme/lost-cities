@@ -3,7 +3,7 @@ before_deploy:
 - rustup target add x86_64-unknown-linux-musl
 - cargo build --release --target=x86_64-unknown-linux-musl
 - mkdir lambda
-- cp target/release/lost-cities lambda/game
+- cp target/x86_64-unknown-linux-musl/release/lost-cities lambda/game
 - curl https://raw.githubusercontent.com/brdgme/lambda/master/index.js > lambda/index.js
 deploy:
   provider: lambda
