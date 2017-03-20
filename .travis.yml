@@ -1,10 +1,8 @@
 language: rust
 before_deploy:
-- curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=$TRAVIS_RUST_VERSION -y
-- ~/.cargo/bin/rustup target add x86_64-unknown-linux-musl
-- ~/.cargo/bin/cargo build --release --target=x86_64-unknown-linux-musl
+- cargo build --release
 - mkdir lambda
-- cp target/x86_64-unknown-linux-musl/release/lost-cities lambda/game
+- cp target/release/lost-cities lambda/game
 - curl https://raw.githubusercontent.com/brdgme/lambda/master/index.js > lambda/index.js
 deploy:
   provider: lambda
