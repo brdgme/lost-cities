@@ -12,13 +12,14 @@ mod render;
 mod parser;
 
 use std::collections::HashMap;
+use std::default::Default;
 
 use combine::Parser;
 
 use card::{Card, Expedition, Value, expeditions};
 use rand::{thread_rng, Rng};
 use parser::Command;
-use brdgme_game::{Gamer, Log};
+use brdgme_game::{Gamer, Log, Status};
 use brdgme_game::error::GameError;
 use brdgme_markup::Node as N;
 
@@ -397,27 +398,27 @@ impl Gamer for Game {
         Ok((g, logs))
     }
 
-    fn is_finished(&self) -> bool {
-        self.round >= START_ROUND + ROUNDS
-    }
-
-    fn winners(&self) -> Vec<usize> {
-        if !self.is_finished() {
-            return vec![];
-        }
-        let p0_score = self.player_score(0);
-        let p1_score = self.player_score(1);
-        if p0_score > p1_score {
-            vec![0]
-        } else if p1_score > p0_score {
-            vec![1]
+    fn status(&self) -> Status {
+        if self.round >= START_ROUND + ROUNDS {
+            Status::Finished {
+                winners: {
+                    let p0_score = self.player_score(0);
+                    let p1_score = self.player_score(1);
+                    if p0_score > p1_score {
+                        vec![0]
+                    } else if p1_score > p0_score {
+                        vec![1]
+                    } else {
+                        vec![0, 1]
+                    }
+                },
+            }
         } else {
-            vec![0, 1]
+            Status::Active {
+                whose_turn: vec![self.current_player],
+                eliminated: vec![],
+            }
         }
-    }
-
-    fn whose_turn(&self) -> Vec<usize> {
-        vec![self.current_player]
     }
 
     fn pub_state(&self, player: Option<usize>) -> Self::PubState {
