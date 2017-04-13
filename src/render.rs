@@ -23,7 +23,7 @@ impl Renderer for PubState {
             layout.append(&mut vec![vec![],
                                     vec![(A::Center,
                                           vec![N::Fg(GREY.into(), vec![N::text("Your hand")])])],
-                                    vec![(A::Center, render_hand(&h))]]);
+                                    vec![(A::Center, render_hand(h))]]);
         }
         // Scores
         let persp = match self.player {
@@ -49,7 +49,9 @@ impl Renderer for PubState {
                                                         .get(*p)
                                                         .and_then(|s| s.get(r))
                                                         .map(|rs| format!("{}", rs))
-                                                        .unwrap_or("".to_string()))])]);
+                                                        .unwrap_or_else(|| {
+                                                                            "".to_string()
+                                                                        }))])]);
             }
             score_row.extend(vec![(A::Left, vec![]),
                                   (A::Center,
