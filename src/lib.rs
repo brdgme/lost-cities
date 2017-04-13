@@ -13,7 +13,7 @@ mod parser;
 
 use combine::Parser;
 
-use brdgme_game::{Gamer, Log, Status, CommandResponse};
+use brdgme_game::{Gamer, Log, Status, CommandResponse, Stat};
 use brdgme_game::errors::*;
 use brdgme_markup::Node as N;
 
@@ -45,6 +45,17 @@ impl Default for Phase {
 }
 
 #[derive(Default, PartialEq, Debug, Clone, Serialize, Deserialize)]
+pub struct Stats {
+    pub plays: usize,
+    pub discards: usize,
+    pub takes: usize,
+    pub draws: usize,
+    pub turns: usize,
+    pub investments: usize,
+    pub expeditions: usize,
+}
+
+#[derive(Default, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct Game {
     pub round: usize,
     pub phase: Phase,
@@ -55,6 +66,7 @@ pub struct Game {
     pub expeditions: Vec<Vec<Card>>,
     pub current_player: usize,
     pub discarded_expedition: Option<Expedition>,
+    pub stats: Vec<Stats>,
 }
 
 #[derive(Default, Serialize)]
@@ -181,6 +193,8 @@ impl Game {
             // was started then everything will already be initialised.
             self.next_phase();
         }
+        self.stats[player].draws += 1;
+        self.stats[player].turns += 1;
         Ok(logs)
     }
 
@@ -229,6 +243,8 @@ impl Game {
                 .push(c);
             self.discards.remove(index);
             self.next_phase();
+            self.stats[player].takes += 1;
+            self.stats[player].turns += 1;
             Ok(vec![Log::public(vec![N::Player(player), N::text(" took "), render::card(&c)])])
         } else {
             Err(ErrorKind::InvalidInput("There are no discarded cards for that expedition"
@@ -274,6 +290,7 @@ impl Game {
         let (e, _) = c;
         self.discarded_expedition = Some(e);
         self.next_phase();
+        self.stats[player].discards += 1;
         Ok(vec![Log::public(vec![N::Player(player), N::text(" discarded "), render::card(&c)])])
     }
 
@@ -329,6 +346,14 @@ impl Game {
                 }
             }
         }
+        if self.expeditions
+            .get(player)
+            .ok_or_else(|| {
+                ErrorKind::Internal(format!("could not find player expedition for player {}",
+                                            player))
+            })?.is_empty() {
+            self.stats[player].expeditions += 1;
+        }
         self.remove_player_card(player, c)?;
         self.expeditions
             .get_mut(player)
@@ -338,6 +363,7 @@ impl Game {
             })?
             .push(c);
         self.next_phase();
+        self.stats[player].plays += 1;
         Ok(vec![Log::public(vec![N::Player(player), N::text(" played "), render::card(&c)])])
     }
 
@@ -389,6 +415,26 @@ impl Game {
             None => 0,
         }
     }
+
+    fn player_stats(&self, player: usize) -> HashMap<String, Stat> {
+        let mut stats = HashMap::new();
+        if player >= self.stats.len() {
+            return stats;
+        }
+        stats.insert("Plays".to_string(),
+                     Stat::Fraction(self.stats[player].plays as i32,
+                                    self.stats[player].turns as i32));
+        stats.insert("Discards".to_string(),
+                     Stat::Fraction(self.stats[player].discards as i32,
+                                    self.stats[player].turns as i32));
+        stats.insert("Draws".to_string(),
+                     Stat::Fraction(self.stats[player].draws as i32,
+                                    self.stats[player].turns as i32));
+        stats.insert("Takes".to_string(),
+                     Stat::Fraction(self.stats[player].takes as i32,
+                                    self.stats[player].turns as i32));
+        stats
+    }
 }
 
 pub fn opponent(player: usize) -> usize {
@@ -404,6 +450,7 @@ impl Gamer for Game {
         }
         let mut g = Game {
             round: START_ROUND,
+            stats: vec![Stats::default(), Stats::default()],
             ..Game::default()
         };
         let logs = g.start_round()?;
@@ -424,7 +471,7 @@ impl Gamer for Game {
                         vec![0, 1]
                     }
                 },
-                stats: vec![],
+                stats: vec![self.player_stats(0), self.player_stats(1)],
             }
         } else {
             Status::Active {
