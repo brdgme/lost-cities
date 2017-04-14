@@ -14,6 +14,7 @@ mod parser;
 use combine::Parser;
 
 use brdgme_game::{Gamer, Log, Status, CommandResponse, Stat};
+use brdgme_game::command::{Spec as CommandSpec, Specs as CommandSpecs, Kind as CommandKind};
 use brdgme_game::errors::*;
 use brdgme_markup::Node as N;
 
@@ -555,6 +556,47 @@ impl Gamer for Game {
             }
             Err(e) => Err(brdgme_game::parser::to_game_error(&e).into()),
         }
+    }
+
+    fn command_spec(&self, player: usize, _players: &[String]) -> CommandSpecs {
+        let mut specs = CommandSpecs::new("commands");
+        if self.is_finished() || self.current_player != player {
+            return specs;
+        }
+        let mut commands: Vec<CommandSpec> = vec![];
+        match self.phase {
+            Phase::PlayOrDiscard => {
+                let card_texts: Vec<String> = self.hands[player]
+                    .iter()
+                    .map(|c| render::card_text(c))
+                    .collect();
+                commands.push(CommandKind::Chain(vec![
+                CommandKind::token("play").spec().desc("play a card to one of your expeditions"),
+                CommandKind::Enum(card_texts.to_owned()).spec().desc("the card to play"),
+            ])
+                                      .spec());
+                commands.push(CommandKind::Chain(vec![
+                CommandKind::token("discard").spec()
+                    .desc("discard a card to one of the face up discard piles"),
+                CommandKind::Enum(card_texts.to_owned()).spec().desc("the card to discard"),
+            ])
+                                      .spec());
+            }
+            Phase::DrawOrTake => {
+                commands.push(CommandKind::token("draw")
+                                  .spec()
+                                  .desc("draw a replacement card from the draw pile"));
+                commands.push(CommandKind::Chain(vec![
+                CommandKind::token("take").spec()
+                    .desc("take a card from the top of a face up discard pile"),
+                CommandKind::Enum(card::expeditions().iter().map(|e| format!("{}", e)).collect())
+                    .spec().desc("the discard pile colour to take a card from"),
+            ])
+                                      .spec());
+            }
+        }
+        specs.register("commands", CommandKind::OneOf(commands).into());
+        specs
     }
 }
 
