@@ -349,10 +349,10 @@ impl Game {
         }
         if self.expeditions
             .get(player)
-            .ok_or_else(|| {
+            .ok_or_else(|| 
                 ErrorKind::Internal(format!("could not find player expedition for player {}",
                                             player))
-            })?.is_empty() {
+            )?.is_empty() {
             self.stats[player].expeditions += 1;
         }
         self.remove_player_card(player, c)?;
@@ -597,6 +597,12 @@ impl Gamer for Game {
         }
         specs.register("commands", CommandKind::OneOf(commands).into());
         specs
+    }
+
+    fn points(&self) -> Vec<f32> {
+        (0..PLAYERS)
+            .map(|p| self.player_score(p) as f32)
+            .collect()
     }
 }
 
