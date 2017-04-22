@@ -604,6 +604,10 @@ impl Gamer for Game {
             .map(|p| self.player_score(p) as f32)
             .collect()
     }
+
+    fn player_counts() -> Vec<usize> {
+        vec![2]
+    }
 }
 
 pub fn score(cards: &[Card]) -> isize {
