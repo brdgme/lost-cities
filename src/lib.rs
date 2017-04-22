@@ -70,7 +70,7 @@ pub struct Game {
     pub stats: Vec<Stats>,
 }
 
-#[derive(Default, Serialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct PubState {
     pub player: Option<usize>,
     pub round: usize,
