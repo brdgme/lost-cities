@@ -559,7 +559,7 @@ impl Gamer for Game {
     }
 
     fn command_spec(&self, player: usize, _players: &[String]) -> CommandSpecs {
-        let mut specs = CommandSpecs::new("commands");
+        let mut specs = CommandSpecs::default();
         if self.is_finished() || self.current_player != player {
             return specs;
         }
@@ -595,7 +595,7 @@ impl Gamer for Game {
                                       .spec());
             }
         }
-        specs.register("commands", CommandKind::OneOf(commands).into());
+        specs.entry = CommandKind::OneOf(commands).spec();
         specs
     }
 
