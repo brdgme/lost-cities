@@ -31,32 +31,43 @@ impl Game {
     }
 
     pub fn play_parser(&self, player: usize) -> impl Parser<Command> {
-        Map::new(Chain2::new(Token::new("play"), self.player_card_parser(player)),
-                 |(_, c)| Command::Play(c))
+        Doc::name_desc("play",
+                       "play a card to an expedition",
+                       Map::new(Chain2::new(Token::new("play"), self.player_card_parser(player)),
+                                |(_, c)| Command::Play(c)))
     }
 
     pub fn discard_parser(&self, player: usize) -> impl Parser<Command> {
-        Map::new(Chain2::new(Token::new("discard"), self.player_card_parser(player)),
-                 |(_, c)| Command::Discard(c))
+        Doc::name_desc("discard",
+                       "discard a card to the common discard piles",
+                       Map::new(Chain2::new(Token::new("discard"),
+                                            self.player_card_parser(player)),
+                                |(_, c)| Command::Discard(c)))
     }
 
     pub fn player_card_parser(&self, player: usize) -> impl Parser<Card> {
-        Enum::exact(self.hands
-                        .get(player)
-                        .cloned()
-                        .unwrap_or_else(|| vec![]))
+        Doc::name_desc("card",
+                       "the card in your hand",
+                       Enum::exact(self.hands
+                                       .get(player)
+                                       .cloned()
+                                       .unwrap_or_else(|| vec![])))
     }
 }
 
 pub fn draw_parser() -> impl Parser<Command> {
-    Map::new(Token::new("draw"), |_| Command::Draw)
+    Doc::name_desc("draw",
+                   "draw a card from the draw pile",
+                   Map::new(Token::new("draw"), |_| Command::Draw))
 }
 
 pub fn take_parser() -> impl Parser<Command> {
-    Map::new(Chain2::new(Token::new("take"), expedition_parser()),
-             |(_, e)| Command::Take(e))
+    Doc::name_desc("take",
+                   "take the top card from one of the common discard piles",
+                   Map::new(Chain2::new(Token::new("take"), expedition_parser()),
+                            |(_, e)| Command::Take(e)))
 }
 
 pub fn expedition_parser() -> impl Parser<Expedition> {
-    Enum::exact(expeditions())
+    Doc::name("expedition", Enum::exact(expeditions()))
 }
