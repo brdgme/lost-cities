@@ -91,7 +91,7 @@ impl PubState {
 
             discards.push((A::Center,
                            vec![if let Some(v) = self.discards.get(&e) {
-                                    card(&(e, *v))
+                                    card(&(e, *v).into())
                                 } else {
                                     N::Fg(e.color().into(), vec![N::text("--")])
                                 }]));
@@ -163,8 +163,7 @@ fn render_hand(cards: &[Card]) -> Vec<N> {
 }
 
 pub fn card(c: &Card) -> N {
-    let e = c.0;
-    N::Bold(vec![N::Fg(e.color().into(), vec![N::text(card_text(c))])])
+    N::Bold(vec![N::Fg(c.expedition.color().into(), vec![N::text(c.to_string())])])
 }
 
 pub fn comma_cards(cards: &[Card]) -> Vec<N> {
@@ -176,9 +175,4 @@ pub fn comma_cards(cards: &[Card]) -> Vec<N> {
         output.push(card(c));
     }
     output
-}
-
-pub fn card_text(c: &Card) -> String {
-    let &(e, v) = c;
-    format!("{}{}", e, v)
 }

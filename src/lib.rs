@@ -1,3 +1,5 @@
+#![feature(conservative_impl_trait)]
+
 extern crate rand;
 extern crate combine;
 #[macro_use]
@@ -8,13 +10,12 @@ extern crate brdgme_color;
 extern crate brdgme_markup;
 
 mod card;
+mod command;
 mod render;
-mod parser;
-
-use combine::Parser;
 
 use brdgme_game::{Gamer, Log, Status, CommandResponse, Stat};
-use brdgme_game::command::{Spec as CommandSpec, Specs as CommandSpecs, Kind as CommandKind};
+use brdgme_game::command::Spec as CommandSpec;
+use brdgme_game::command::parser::Output as ParseOutput;
 use brdgme_game::errors::*;
 use brdgme_markup::Node as N;
 
@@ -23,7 +24,7 @@ use std::default::Default;
 
 use card::{Card, Expedition, Value, expeditions};
 use rand::{thread_rng, Rng};
-use parser::Command;
+use command::Command;
 
 const INVESTMENTS: usize = 3;
 pub const ROUNDS: usize = 3;
@@ -88,10 +89,10 @@ fn initial_deck() -> Vec<Card> {
     let mut deck: Vec<Card> = vec![];
     for e in card::expeditions() {
         for _ in 0..INVESTMENTS {
-            deck.push((e, Value::Investment));
+            deck.push((e, Value::Investment).into());
         }
         for v in MIN_VALUE..MAX_VALUE + 1 {
-            deck.push((e, Value::N(v)));
+            deck.push((e, Value::N(v)).into());
         }
     }
     deck
@@ -231,7 +232,7 @@ impl Game {
         }
         if let Some(index) = self.discards
                .iter()
-               .rposition(|&(e, _)| e == expedition) {
+               .rposition(|&c| c.expedition == expedition) {
             let c = *self.discards
                          .get(index)
                          .ok_or_else(|| {
@@ -258,7 +259,7 @@ impl Game {
         self.discards
             .iter()
             .rev()
-            .find(|c| c.0 == expedition)
+            .find(|c| c.expedition == expedition)
             .cloned()
     }
 
@@ -270,12 +271,10 @@ impl Game {
                                                         player))
                         })
             .and_then(|h| {
-                let index = h.iter()
-                    .position(|hc| c == *hc)
-                    .ok_or_else(|| {
-                                    ErrorKind::InvalidInput(format!("You don't have {}",
-                                                                    render::card_text(&c)))
-                                })?;
+                let index =
+                    h.iter()
+                        .position(|hc| c == *hc)
+                        .ok_or_else(|| ErrorKind::InvalidInput(format!("You don't have {}", c)))?;
                 h.remove(index);
                 Ok(())
             })?;
@@ -288,8 +287,7 @@ impl Game {
         self.assert_phase(Phase::PlayOrDiscard)?;
         self.remove_player_card(player, c)?;
         self.discards.push(c);
-        let (e, _) = c;
-        self.discarded_expedition = Some(e);
+        self.discarded_expedition = Some(c.expedition);
         self.next_phase();
         self.stats[player].discards += 1;
         Ok(vec![Log::public(vec![N::Player(player), N::text(" discarded "), render::card(&c)])])
@@ -304,10 +302,11 @@ impl Game {
                         })
             .and_then(|h| {
                           h.iter()
-                    .position(|hc| c == *hc)
-                    .ok_or_else(|| {
-                        ErrorKind::InvalidInput(format!("You don't have {}", render::card_text(&c)))
-                    })
+                              .position(|hc| c == *hc)
+                              .ok_or_else(|| {
+                                              ErrorKind::InvalidInput(format!("You don't have {}",
+                                                                              c))
+                                          })
                       })?;
         Ok(())
     }
@@ -317,8 +316,10 @@ impl Game {
             .get(player)
             .and_then(|e| {
                           e.iter()
-                              .filter(|&c| c.0 == expedition && c.1 != Value::Investment)
-                              .map(|&c| if let Value::N(n) = c.1 { n } else { 0 })
+                              .filter(|&c| {
+                                          c.expedition == expedition && c.value != Value::Investment
+                                      })
+                              .map(|&c| if let Value::N(n) = c.value { n } else { 0 })
                               .max()
                       })
     }
@@ -328,20 +329,19 @@ impl Game {
         self.assert_player_turn(player)?;
         self.assert_phase(Phase::PlayOrDiscard)?;
         self.assert_has_card(player, c)?;
-        let (e, v) = c;
-        if let Some(hn) = self.highest_value_in_expedition(player, e) {
-            match v {
+        if let Some(hn) = self.highest_value_in_expedition(player, c.expedition) {
+            match c.value {
                 Value::Investment => {
                     return Err(ErrorKind::InvalidInput(
                         format!("You can't play {} as you've already played a higher card",
-                                                               render::card_text(&c)))
+                                                               c))
                                        .into());
                 }
                 Value::N(n) => {
                     if n <= hn {
                         return Err(ErrorKind::InvalidInput(
                             format!("You can't play {} as you've already played a higher card",
-                                                                   render::card_text(&c)))
+                                                                   c))
                                            .into());
                     }
                 }
@@ -496,7 +496,7 @@ impl Gamer for Game {
                 let mut d: HashMap<Expedition, Value> = HashMap::new();
                 for e in card::expeditions() {
                     if let Some(c) = card::last_expedition(&self.discards, e) {
-                        d.insert(e, c.1);
+                        d.insert(e, c.value);
                     }
                 }
                 d
@@ -513,8 +513,12 @@ impl Gamer for Game {
                input: &str,
                _players: &[String])
                -> Result<CommandResponse> {
-        match parser::command().parse(input) {
-            Ok((Command::Play(c), remaining)) => {
+        match self.command_parser(player).parse(input) {
+            Ok(ParseOutput {
+                   value: Command::Play(c),
+                   remaining,
+                   ..
+               }) => {
                 self.play(player, c)
                     .map(|l| {
                              CommandResponse {
@@ -524,7 +528,11 @@ impl Gamer for Game {
                              }
                          })
             }
-            Ok((Command::Discard(c), remaining)) => {
+            Ok(ParseOutput {
+                   value: Command::Discard(c),
+                   remaining,
+                   ..
+               }) => {
                 self.discard(player, c)
                     .map(|l| {
                              CommandResponse {
@@ -534,7 +542,11 @@ impl Gamer for Game {
                              }
                          })
             }
-            Ok((Command::Take(e), remaining)) => {
+            Ok(ParseOutput {
+                   value: Command::Take(e),
+                   remaining,
+                   ..
+               }) => {
                 self.take(player, e)
                     .map(|l| {
                              CommandResponse {
@@ -544,7 +556,11 @@ impl Gamer for Game {
                              }
                          })
             }
-            Ok((Command::Draw, remaining)) => {
+            Ok(ParseOutput {
+                   value: Command::Draw,
+                   remaining,
+                   ..
+               }) => {
                 self.draw(player)
                     .map(|l| {
                              CommandResponse {
@@ -554,49 +570,12 @@ impl Gamer for Game {
                              }
                          })
             }
-            Err(e) => Err(brdgme_game::parser::to_game_error(&e).into()),
+            Err(e) => Err(ErrorKind::InvalidInput(e.to_string()).into()),
         }
     }
 
-    fn command_spec(&self, player: usize, _players: &[String]) -> CommandSpecs {
-        let mut specs = CommandSpecs::default();
-        if self.is_finished() || self.current_player != player {
-            return specs;
-        }
-        let mut commands: Vec<CommandSpec> = vec![];
-        match self.phase {
-            Phase::PlayOrDiscard => {
-                let card_texts: Vec<String> = self.hands[player]
-                    .iter()
-                    .map(|c| render::card_text(c))
-                    .collect();
-                commands.push(CommandKind::Chain(vec![
-                CommandKind::token("play").spec().desc("play a card to one of your expeditions"),
-                CommandKind::Enum(card_texts.to_owned()).spec().desc("the card to play"),
-            ])
-                                      .spec());
-                commands.push(CommandKind::Chain(vec![
-                CommandKind::token("discard").spec()
-                    .desc("discard a card to one of the face up discard piles"),
-                CommandKind::Enum(card_texts.to_owned()).spec().desc("the card to discard"),
-            ])
-                                      .spec());
-            }
-            Phase::DrawOrTake => {
-                commands.push(CommandKind::token("draw")
-                                  .spec()
-                                  .desc("draw a replacement card from the draw pile"));
-                commands.push(CommandKind::Chain(vec![
-                CommandKind::token("take").spec()
-                    .desc("take a card from the top of a face up discard pile"),
-                CommandKind::Enum(card::expeditions().iter().map(|e| format!("{}", e)).collect())
-                    .spec().desc("the discard pile colour to take a card from"),
-            ])
-                                      .spec());
-            }
-        }
-        specs.entry = CommandKind::OneOf(commands).spec();
-        specs
+    fn command_spec(&self, player: usize, _players: &[String]) -> CommandSpec {
+        self.command_parser(player).to_spec()
     }
 
     fn points(&self) -> Vec<f32> {
@@ -615,15 +594,15 @@ pub fn score(cards: &[Card]) -> isize {
     let mut exp_inv: HashMap<Expedition, isize> = HashMap::new();
     let mut exp_sum: HashMap<Expedition, isize> = HashMap::new();
     for c in cards {
-        let cards = exp_cards.entry(c.0).or_insert(0);
+        let cards = exp_cards.entry(c.expedition).or_insert(0);
         *cards += 1;
-        match c.1 {
+        match c.value {
             Value::Investment => {
-                let inv = exp_inv.entry(c.0).or_insert(0);
+                let inv = exp_inv.entry(c.expedition).or_insert(0);
                 *inv += 1;
             }
             Value::N(n) => {
-                let sum = exp_sum.entry(c.0).or_insert(0);
+                let sum = exp_sum.entry(c.expedition).or_insert(0);
                 *sum += n as isize;
             }
         }
@@ -692,58 +671,62 @@ mod test {
     #[test]
     fn play_works() {
         let mut game = Game::new(2).unwrap().0;
-        game.hands[0] = vec![(Expedition::Green, Value::Investment),
-                             (Expedition::Green, Value::Investment),
-                             (Expedition::Green, Value::N(2)),
-                             (Expedition::Green, Value::N(3)),
-                             (Expedition::Yellow, Value::Investment),
-                             (Expedition::Yellow, Value::Investment),
-                             (Expedition::Yellow, Value::N(2)),
-                             (Expedition::Yellow, Value::N(3))];
-        game.play(0, (Expedition::Green, Value::Investment))
+        game.hands[0] = vec![(Expedition::Green, Value::Investment).into(),
+                             (Expedition::Green, Value::Investment).into(),
+                             (Expedition::Green, Value::N(2)).into(),
+                             (Expedition::Green, Value::N(3)).into(),
+                             (Expedition::Yellow, Value::Investment).into(),
+                             (Expedition::Yellow, Value::Investment).into(),
+                             (Expedition::Yellow, Value::N(2)).into(),
+                             (Expedition::Yellow, Value::N(3)).into()];
+        game.play(0, (Expedition::Green, Value::Investment).into())
             .unwrap();
         game.draw(0).unwrap();
         discard_and_draw(&mut game, 1);
-        game.play(0, (Expedition::Green, Value::N(2))).unwrap();
+        game.play(0, (Expedition::Green, Value::N(2)).into())
+            .unwrap();
         game.draw(0).unwrap();
         discard_and_draw(&mut game, 1);
         // Shouldn't be able to play GX now.
-        assert!(game.play(0, (Expedition::Green, Value::Investment))
+        assert!(game.play(0, (Expedition::Green, Value::Investment).into())
                     .is_err());
-        game.play(0, (Expedition::Green, Value::N(3))).unwrap();
+        game.play(0, (Expedition::Green, Value::N(3)).into())
+            .unwrap();
         game.draw(0).unwrap();
         discard_and_draw(&mut game, 1);
-        game.play(0, (Expedition::Yellow, Value::N(3))).unwrap();
+        game.play(0, (Expedition::Yellow, Value::N(3)).into())
+            .unwrap();
         game.draw(0).unwrap();
         discard_and_draw(&mut game, 1);
         // Shouldn't be able to play Y2 now.
-        assert!(game.play(0, (Expedition::Yellow, Value::N(2))).is_err());
+        assert!(game.play(0, (Expedition::Yellow, Value::N(2)).into())
+                    .is_err());
     }
 
     #[test]
     fn score_works() {
         assert_eq!(0, score(&vec![]));
-        assert_eq!(-17, score(&vec![(Expedition::Red, Value::N(3))]));
+        assert_eq!(-17, score(&vec![(Expedition::Red, Value::N(3)).into()]));
         assert_eq!(-34,
-                   score(&vec![(Expedition::Red, Value::N(3)),
-                               (Expedition::Green, Value::N(3))]));
+                   score(&vec![(Expedition::Red, Value::N(3)).into(),
+                               (Expedition::Green, Value::N(3)).into()]));
         assert_eq!(-30,
-                   score(&vec![(Expedition::Red, Value::N(3)),
-                               (Expedition::Green, Value::N(3)),
-                               (Expedition::Green, Value::N(4))]));
+                   score(&vec![(Expedition::Red, Value::N(3)).into(),
+                               (Expedition::Green, Value::N(3)).into(),
+                               (Expedition::Green, Value::N(4)).into()]));
         assert_eq!(-37,
-                   score(&vec![(Expedition::Green, Value::Investment),
-                               (Expedition::Red, Value::N(3)),
-                               (Expedition::Green, Value::N(4)),
-                               (Expedition::Green, Value::N(6))]));
+                   score(&vec![(Expedition::Green, Value::Investment).into(),
+                               (Expedition::Red, Value::N(3)).into(),
+                               (Expedition::Green, Value::N(4)).into(),
+                               (Expedition::Green, Value::N(6)).into()]));
         assert_eq!(44,
-                   score(&vec![(Expedition::Green, Value::N(2)),
-                               (Expedition::Green, Value::N(3)),
-                               (Expedition::Green, Value::N(4)),
-                               (Expedition::Green, Value::N(5)),
-                               (Expedition::Green, Value::N(6)),
-                               (Expedition::Green, Value::N(7)),
-                               (Expedition::Green, Value::N(8)),
-                               (Expedition::Green, Value::N(9))]));
+                   score(&vec![(Expedition::Green, Value::N(2)).into(),
+                               (Expedition::Green, Value::N(3)).into(),
+                               (Expedition::Green, Value::N(4)).into(),
+                               (Expedition::Green, Value::N(5)).into(),
+                               (Expedition::Green, Value::N(6)).into(),
+                               (Expedition::Green, Value::N(7)).into(),
+                               (Expedition::Green, Value::N(8)).into(),
+                               (Expedition::Green, Value::N(9)).into()]));
     }
 }

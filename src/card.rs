@@ -65,7 +65,26 @@ pub fn expeditions() -> Vec<Expedition> {
          Expedition::Yellow]
 }
 
-pub type Card = (Expedition, Value);
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct Card {
+    pub expedition: Expedition,
+    pub value: Value,
+}
+
+impl fmt::Display for Card {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", self.expedition, self.value)
+    }
+}
+
+impl From<(Expedition, Value)> for Card {
+    fn from((e, v): (Expedition, Value)) -> Self {
+        Self {
+            expedition: e,
+            value: v,
+        }
+    }
+}
 
 pub fn by_expedition(cards: &[Card]) -> HashMap<Expedition, Vec<Card>> {
     let mut output: HashMap<Expedition, Vec<Card>> = HashMap::new();
@@ -78,11 +97,15 @@ pub fn by_expedition(cards: &[Card]) -> HashMap<Expedition, Vec<Card>> {
 pub fn of_expedition(cards: &[Card], expedition: Expedition) -> Vec<Card> {
     cards
         .iter()
-        .filter(|c| c.0 == expedition)
+        .filter(|c| c.expedition == expedition)
         .cloned()
         .collect()
 }
 
 pub fn last_expedition(cards: &[Card], expedition: Expedition) -> Option<Card> {
-    cards.iter().rev().find(|c| c.0 == expedition).cloned()
+    cards
+        .iter()
+        .rev()
+        .find(|c| c.expedition == expedition)
+        .cloned()
 }
