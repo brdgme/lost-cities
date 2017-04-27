@@ -1,7 +1,6 @@
 #![feature(conservative_impl_trait)]
 
 extern crate rand;
-extern crate combine;
 #[macro_use]
 extern crate serde_derive;
 
