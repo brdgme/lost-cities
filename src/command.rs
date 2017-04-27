@@ -41,10 +41,10 @@ impl Game {
     }
 
     pub fn player_card_parser(&self, player: usize) -> impl Parser<Card> {
-        Enum::new(self.hands
-                      .get(player)
-                      .cloned()
-                      .unwrap_or_else(|| vec![]))
+        Enum::exact(self.hands
+                        .get(player)
+                        .cloned()
+                        .unwrap_or_else(|| vec![]))
     }
 }
 
@@ -58,5 +58,5 @@ pub fn take_parser() -> impl Parser<Command> {
 }
 
 pub fn expedition_parser() -> impl Parser<Expedition> {
-    Enum::new(expeditions())
+    Enum::exact(expeditions())
 }
