@@ -179,7 +179,7 @@ impl Game {
         if phase == self.phase {
             Ok(())
         } else {
-            Err(ErrorKind::InvalidInput("Not the right phase".to_string()).into())
+            Err(ErrorKind::InvalidInput("not the right phase".to_string()).into())
         }
     }
 
@@ -225,7 +225,7 @@ impl Game {
         self.assert_player_turn(player)?;
         self.assert_phase(Phase::DrawOrTake)?;
         if self.discarded_expedition == Some(expedition) {
-            return Err(ErrorKind::InvalidInput("You can't take the same card you just discarded"
+            return Err(ErrorKind::InvalidInput("you can't take the same card you just discarded"
                                                    .to_string())
                                .into());
         }
@@ -248,7 +248,7 @@ impl Game {
             self.stats[player].turns += 1;
             Ok(vec![Log::public(vec![N::Player(player), N::text(" took "), render::card(&c)])])
         } else {
-            Err(ErrorKind::InvalidInput("There are no discarded cards for that expedition"
+            Err(ErrorKind::InvalidInput("there are no discarded cards for that expedition"
                                             .to_string())
                         .into())
         }
@@ -273,7 +273,7 @@ impl Game {
                 let index =
                     h.iter()
                         .position(|hc| c == *hc)
-                        .ok_or_else(|| ErrorKind::InvalidInput(format!("You don't have {}", c)))?;
+                        .ok_or_else(|| ErrorKind::InvalidInput(format!("you don't have {}", c)))?;
                 h.remove(index);
                 Ok(())
             })?;
@@ -303,7 +303,7 @@ impl Game {
                           h.iter()
                               .position(|hc| c == *hc)
                               .ok_or_else(|| {
-                                              ErrorKind::InvalidInput(format!("You don't have {}",
+                                              ErrorKind::InvalidInput(format!("you don't have {}",
                                                                               c))
                                           })
                       })?;
@@ -332,14 +332,14 @@ impl Game {
             match c.value {
                 Value::Investment => {
                     return Err(ErrorKind::InvalidInput(
-                        format!("You can't play {} as you've already played a higher card",
+                        format!("you can't play {} as you've already played a higher card",
                                                                c))
                                        .into());
                 }
                 Value::N(n) => {
                     if n <= hn {
                         return Err(ErrorKind::InvalidInput(
-                            format!("You can't play {} as you've already played a higher card",
+                            format!("you can't play {} as you've already played a higher card",
                                                                    c))
                                            .into());
                     }
