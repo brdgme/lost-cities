@@ -348,7 +348,7 @@ impl Game {
         }
         if self.expeditions
             .get(player)
-            .ok_or_else(|| 
+            .ok_or_else(||
                 ErrorKind::Internal(format!("could not find player expedition for player {}",
                                             player))
             )?.is_empty() {
@@ -510,9 +510,9 @@ impl Gamer for Game {
     fn command(&mut self,
                player: usize,
                input: &str,
-               _players: &[String])
+               players: &[String])
                -> Result<CommandResponse> {
-        match self.command_parser(player).parse(input) {
+        match self.command_parser(player).parse(input, players) {
             Ok(ParseOutput {
                    value: Command::Play(c),
                    remaining,
@@ -573,7 +573,7 @@ impl Gamer for Game {
         }
     }
 
-    fn command_spec(&self, player: usize, _players: &[String]) -> CommandSpec {
+    fn command_spec(&self, player: usize) -> CommandSpec {
         self.command_parser(player).to_spec()
     }
 
@@ -585,6 +585,10 @@ impl Gamer for Game {
 
     fn player_counts() -> Vec<usize> {
         vec![2]
+    }
+
+    fn player_count(&self) -> usize {
+        2
     }
 }
 
