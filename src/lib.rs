@@ -451,6 +451,7 @@ impl Gamer for Game {
         let mut g = Game {
             round: START_ROUND,
             stats: vec![Stats::default(), Stats::default()],
+            scores: vec![vec![], vec![]],
             ..Game::default()
         };
         let logs = g.start_round()?;
@@ -659,6 +660,7 @@ mod test {
         assert_eq!(game.hands[0].len(), 8);
         assert_eq!(game.hands[1].len(), 8);
         assert_eq!(game.deck.len(), 44);
+        assert_eq!(game.scores, vec![vec![0], vec![0]]);
     }
 
     #[test]
