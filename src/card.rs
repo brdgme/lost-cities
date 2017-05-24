@@ -48,12 +48,10 @@ impl fmt::Display for Expedition {
 
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}",
-               match *self {
-                   Value::Investment => "X".to_string(),
-                   Value::N(n) => format!("{}", n),
-               })
+        write!(f, "{}", match *self {
+            Value::Investment => "X".to_string(),
+            Value::N(n) => format!("{}", n),
+        })
     }
 }
 

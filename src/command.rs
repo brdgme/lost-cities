@@ -1,4 +1,5 @@
 use brdgme_game::command::parser::*;
+use brdgme_game::Gamer;
 
 use card::{Card, Expedition, expeditions};
 use Game;
@@ -13,7 +14,10 @@ pub enum Command {
 }
 
 impl Game {
-    pub fn command_parser(&self, player: usize) -> Box<Parser<Command>> {
+    pub fn command_parser(&self, player: usize) -> Option<Box<Parser<Command>>> {
+        if self.is_finished() {
+            return None;
+        }
         let mut parsers: Vec<Box<Parser<Command>>> = vec![];
         if self.current_player == player {
             match self.phase {
@@ -27,7 +31,11 @@ impl Game {
                 }
             }
         }
-        Box::new(OneOf::new(parsers))
+        if parsers.is_empty() {
+            None
+        } else {
+            Some(Box::new(OneOf::new(parsers)))
+        }
     }
 
     pub fn play_parser(&self, player: usize) -> impl Parser<Command> {
@@ -48,10 +56,7 @@ impl Game {
     pub fn player_card_parser(&self, player: usize) -> impl Parser<Card> {
         Doc::name_desc("card",
                        "the card in your hand",
-                       Enum::exact(self.hands
-                                       .get(player)
-                                       .cloned()
-                                       .unwrap_or_else(|| vec![])))
+                       Enum::exact(self.hands.get(player).cloned().unwrap_or_else(|| vec![])))
     }
 }
 

@@ -161,12 +161,12 @@ impl Game {
         let mut log_text = vec![N::text("The game is over, ")];
         log_text.extend(match winners.as_slice() {
                             w if w.len() == 1 => {
-            let p = w[0];
-            vec![N::Player(p),
-                 N::text(format!(" won by {} points",
-                                 scores.get(p).unwrap_or(&0) -
-                                 scores.get(opponent(p)).unwrap_or(&0)))]
-        }
+                                let p = w[0];
+                                vec![N::Player(p),
+                                     N::text(format!(" won by {} points",
+                                                     scores.get(p).unwrap_or(&0) -
+                                                     scores.get(opponent(p)).unwrap_or(&0)))]
+                            }
                             _ => {
                                 vec![N::text(format!("scores tied at {}",
                                                      scores.first().unwrap_or(&0)))]
@@ -347,11 +347,11 @@ impl Game {
             }
         }
         if self.expeditions
-            .get(player)
-            .ok_or_else(||
-                ErrorKind::Internal(format!("could not find player expedition for player {}",
-                                            player))
-            )?.is_empty() {
+               .get(player)
+               .ok_or_else(|| {
+            ErrorKind::Internal(format!("could not find player expedition for player {}", player))
+        })?
+               .is_empty() {
             self.stats[player].expeditions += 1;
         }
         self.remove_player_card(player, c)?;
@@ -512,7 +512,11 @@ impl Gamer for Game {
                input: &str,
                players: &[String])
                -> Result<CommandResponse> {
-        match self.command_parser(player).parse(input, players) {
+        let cp = match self.command_parser(player) {
+            Some(cp) => cp,
+            None => return Err(ErrorKind::InvalidInput("not your turn".to_string()).into()),
+        };
+        match cp.parse(input, players) {
             Ok(ParseOutput {
                    value: Command::Play(c),
                    remaining,
@@ -573,14 +577,12 @@ impl Gamer for Game {
         }
     }
 
-    fn command_spec(&self, player: usize) -> CommandSpec {
-        self.command_parser(player).to_spec()
+    fn command_spec(&self, player: usize) -> Option<CommandSpec> {
+        self.command_parser(player).map(|cp| cp.to_spec())
     }
 
     fn points(&self) -> Vec<f32> {
-        (0..PLAYERS)
-            .map(|p| self.player_score(p) as f32)
-            .collect()
+        (0..PLAYERS).map(|p| self.player_score(p) as f32).collect()
     }
 
     fn player_counts() -> Vec<usize> {
