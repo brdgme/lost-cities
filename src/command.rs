@@ -41,7 +41,7 @@ impl Game {
     pub fn play_parser(&self, player: usize) -> impl Parser<Command> {
         Doc::name_desc("play",
                        "play a card to an expedition",
-                       Map::new(Chain2::new(Token::new("play"), self.player_card_parser(player)),
+                       Map::new(Chain2::new(Token::new("play"), AfterSpace::new(self.player_card_parser(player))),
                                 |(_, c)| Command::Play(c)))
     }
 
@@ -49,7 +49,7 @@ impl Game {
         Doc::name_desc("discard",
                        "discard a card to the common discard piles",
                        Map::new(Chain2::new(Token::new("discard"),
-                                            self.player_card_parser(player)),
+                                            AfterSpace::new(self.player_card_parser(player))),
                                 |(_, c)| Command::Discard(c)))
     }
 
@@ -69,7 +69,7 @@ pub fn draw_parser() -> impl Parser<Command> {
 pub fn take_parser() -> impl Parser<Command> {
     Doc::name_desc("take",
                    "take the top card from one of the common discard piles",
-                   Map::new(Chain2::new(Token::new("take"), expedition_parser()),
+                   Map::new(Chain2::new(Token::new("take"), AfterSpace::new(expedition_parser())),
                             |(_, e)| Command::Take(e)))
 }
 
