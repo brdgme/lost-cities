@@ -55,9 +55,10 @@ impl Game {
     }
 
     pub fn player_card_parser(&self, player: usize) -> impl Parser<Card> {
-        Doc::name_desc("card",
-                       "the card in your hand",
-                       Enum::exact(self.hands.get(player).cloned().unwrap_or_else(|| vec![])))
+        let mut player_hand = self.hands.get(player).cloned().unwrap_or_else(|| vec![]);
+        player_hand.sort();
+        player_hand.dedup();
+        Doc::name_desc("card", "the card in your hand", Enum::exact(player_hand))
     }
 }
 
