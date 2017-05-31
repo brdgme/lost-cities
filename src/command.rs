@@ -41,7 +41,8 @@ impl Game {
     pub fn play_parser(&self, player: usize) -> impl Parser<Command> {
         Doc::name_desc("play",
                        "play a card to an expedition",
-                       Map::new(Chain2::new(Token::new("play"), AfterSpace::new(self.player_card_parser(player))),
+                       Map::new(Chain2::new(Token::new("play"),
+                                            AfterSpace::new(self.player_card_parser(player))),
                                 |(_, c)| Command::Play(c)))
     }
 
