@@ -39,26 +39,27 @@ impl Game {
     }
 
     pub fn play_parser(&self, player: usize) -> impl Parser<Command> {
-        Doc::name_desc("play",
-                       "play a card to an expedition",
-                       Map::new(Chain2::new(Token::new("play"),
-                                            AfterSpace::new(self.player_card_parser(player))),
-                                |(_, c)| Command::Play(c)))
+        Map::new(Chain2::new(Doc::name_desc("play",
+                                            "play a card to an expedition",
+                                            Token::new("play")),
+                             AfterSpace::new(self.player_card_parser(player, "the card to play"))),
+                 |(_, c)| Command::Play(c))
     }
 
     pub fn discard_parser(&self, player: usize) -> impl Parser<Command> {
-        Doc::name_desc("discard",
-                       "discard a card to the common discard piles",
-                       Map::new(Chain2::new(Token::new("discard"),
-                                            AfterSpace::new(self.player_card_parser(player))),
-                                |(_, c)| Command::Discard(c)))
+        Map::new(Chain2::new(Doc::name_desc("discard",
+                                            "discard a card to the common discard piles",
+                                            Token::new("discard")),
+                             AfterSpace::new(self.player_card_parser(player,
+                                                                     "the card to discard"))),
+                 |(_, c)| Command::Discard(c))
     }
 
-    pub fn player_card_parser(&self, player: usize) -> impl Parser<Card> {
+    pub fn player_card_parser(&self, player: usize, desc: &str) -> impl Parser<Card> {
         let mut player_hand = self.hands.get(player).cloned().unwrap_or_else(|| vec![]);
         player_hand.sort();
         player_hand.dedup();
-        Doc::name_desc("card", "the card in your hand", Enum::exact(player_hand))
+        Doc::name_desc("card", desc, Enum::exact(player_hand))
     }
 }
 
@@ -69,12 +70,15 @@ pub fn draw_parser() -> impl Parser<Command> {
 }
 
 pub fn take_parser() -> impl Parser<Command> {
-    Doc::name_desc("take",
-                   "take the top card from one of the common discard piles",
-                   Map::new(Chain2::new(Token::new("take"), AfterSpace::new(expedition_parser())),
-                            |(_, e)| Command::Take(e)))
+    Map::new(Chain2::new(Doc::name_desc("take",
+                                        "take the top card from one of the common discard piles",
+                                        Token::new("take")),
+                         AfterSpace::new(expedition_parser())),
+             |(_, e)| Command::Take(e))
 }
 
 pub fn expedition_parser() -> impl Parser<Expedition> {
-    Doc::name("expedition", Enum::exact(expeditions()))
+    Doc::name_desc("expedition",
+                   "the expedition to take from",
+                   Enum::exact(expeditions()))
 }
