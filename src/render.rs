@@ -11,19 +11,42 @@ impl Renderer for PubState {
     fn render(&self) -> Vec<N> {
         let mut layout: Vec<Row> = vec![];
         if !self.is_finished {
-            layout.extend(vec![vec![(A::Center,
-                                     vec![N::text("Round "),
-                                          N::Bold(vec![N::text(format!("{}", self.round))]),
-                                          N::text(" of "),
-                                          N::Bold(vec![N::text(format!("{}", super::ROUNDS))])])],
-                               vec![]]);
+            layout.extend(vec![
+                vec![
+                    (
+                        A::Center,
+                        vec![
+                            N::text("Round "),
+                            N::Bold(
+                                vec![N::text(format!("{}", self.round))]
+                            ),
+                            N::text(" of "),
+                            N::Bold(
+                                vec![N::text(format!("{}", super::ROUNDS))]
+                            ),
+                        ]
+                    ),
+                ],
+                vec![],
+            ]);
         }
         layout.push(vec![(A::Center, self.render_tableau())]);
         if let Some(ref h) = self.hand {
-            layout.append(&mut vec![vec![],
-                                    vec![(A::Center,
-                                          vec![N::Fg(GREY.into(), vec![N::text("Your hand")])])],
-                                    vec![(A::Center, render_hand(h))]]);
+            layout.append(&mut vec![
+                vec![],
+                vec![
+                    (
+                        A::Center,
+                        vec![
+                            N::Fg(
+                                GREY.into(),
+                                vec![N::text("Your hand")]
+                            ),
+                        ]
+                    ),
+                ],
+                vec![(A::Center, render_hand(h))],
+            ]);
         }
         // Scores
         let persp = match self.player {
@@ -33,35 +56,64 @@ impl Renderer for PubState {
         let mut scores: Vec<Row> = vec![];
         let mut header: Row = vec![(A::Left, vec![])];
         for r in START_ROUND..(START_ROUND + ROUNDS) {
-            header.extend(vec![(A::Left, vec![N::text("  ")]),
-                               (A::Center,
-                                vec![N::Fg(GREY.into(), vec![N::text(format!("R{}", r))])])]);
+            header.extend(vec![
+                (A::Left, vec![N::text("  ")]),
+                (
+                    A::Center,
+                    vec![
+                        N::Fg(GREY.into(), vec![N::text(format!("R{}", r))]),
+                    ]
+                ),
+            ]);
         }
-        header.extend(vec![(A::Left, vec![N::text("  ")]),
-                           (A::Center, vec![N::Fg(GREY.into(), vec![N::text("Tot")])])]);
+        header.extend(vec![
+            (A::Left, vec![N::text("  ")]),
+            (
+                A::Center,
+                vec![N::Fg(GREY.into(), vec![N::text("Tot")])]
+            ),
+        ]);
         scores.push(header);
         for p in &[persp, opponent(persp)] {
             let mut score_row: Row = vec![(A::Right, vec![N::Player(*p)])];
             for r in 0..ROUNDS {
-                score_row.extend(vec![(A::Left, vec![]),
-                                      (A::Center,
-                                       vec![N::text(self.scores
-                                                        .get(*p)
-                                                        .and_then(|s| s.get(r))
-                                                        .map(|rs| format!("{}", rs))
-                                                        .unwrap_or_else(|| {
-                                                                            "".to_string()
-                                                                        }))])]);
+                score_row.extend(vec![
+                    (A::Left, vec![]),
+                    (
+                        A::Center,
+                        vec![
+                            N::text(
+                                self.scores
+                                    .get(*p)
+                                    .and_then(|s| s.get(r))
+                                    .map(|rs| format!("{}", rs))
+                                    .unwrap_or_else(|| "".to_string())
+                            ),
+                        ]
+                    ),
+                ]);
             }
-            score_row.extend(vec![(A::Left, vec![]),
-                                  (A::Center,
-                                   vec![N::text(format!("{}", self.player_score(*p)))])]);
+            score_row.extend(vec![
+                (A::Left, vec![]),
+                (
+                    A::Center,
+                    vec![N::text(format!("{}", self.player_score(*p)))]
+                ),
+            ]);
             scores.push(score_row);
         }
-        layout.append(&mut vec![vec![],
-                                vec![(A::Center,
-                                      vec![N::Fg(GREY.into(), vec![N::text("Scores")])])],
-                                vec![(A::Center, vec![N::Table(scores)])]]);
+        layout.append(&mut vec![
+            vec![],
+            vec![
+                (
+                    A::Center,
+                    vec![
+                        N::Fg(GREY.into(), vec![N::text("Scores")]),
+                    ]
+                ),
+            ],
+            vec![(A::Center, vec![N::Table(scores)])],
+        ]);
         vec![N::Table(layout)]
     }
 }
@@ -83,25 +135,42 @@ impl PubState {
         rows.push(vec![]);
 
         // Discards
-        let mut discards: Row = vec![(A::Right,
-                                      vec![N::Fg(GREY.into(), vec![N::text("Discard ")])])];
+        let mut discards: Row = vec![
+            (
+                A::Right,
+                vec![N::Fg(GREY.into(), vec![N::text("Discard ")])]
+            ),
+        ];
         for e in expeditions() {
             // Column spacing
             discards.push((A::Left, vec![N::text("  ")]));
 
-            discards.push((A::Center,
-                           vec![if let Some(v) = self.discards.get(&e) {
-                                    card(&(e, *v).into())
-                                } else {
-                                    N::Fg(e.color().into(), vec![N::text("--")])
-                                }]));
+            discards.push((
+                A::Center,
+                vec![
+                    if let Some(v) = self.discards.get(&e) {
+                        card(&(e, *v).into())
+                    } else {
+                        N::Fg(e.color().into(), vec![N::text("--")])
+                    },
+                ],
+            ));
         }
-        discards.push((A::Left,
-                       vec![N::Fg(GREY.into(),
-                                  vec![N::text("   "),
-                                       N::Bold(vec![N::text(format!("{}",
-                                                                    self.deck_remaining))]),
-                                       N::text(" left")])]));
+        discards.push((
+            A::Left,
+            vec![
+                N::Fg(
+                    GREY.into(),
+                    vec![
+                        N::text("   "),
+                        N::Bold(
+                            vec![N::text(format!("{}", self.deck_remaining))]
+                        ),
+                        N::text(" left"),
+                    ]
+                ),
+            ],
+        ));
 
         rows.push(discards);
 
@@ -131,11 +200,13 @@ fn render_tableau_cards(cards: &[Card], header: &N) -> Vec<Row> {
         largest = cmp::max(largest, by_exp.get(&e).unwrap_or(&vec![]).len());
     }
     for row_i in 0..largest {
-        let mut row: Row = vec![if row_i == 0 {
-                                    (A::Right, vec![header.to_owned(), N::text(" ")])
-                                } else {
-                                    (A::Left, vec![])
-                                }];
+        let mut row: Row = vec![
+            if row_i == 0 {
+                (A::Right, vec![header.to_owned(), N::text(" ")])
+            } else {
+                (A::Left, vec![])
+            },
+        ];
         for e in expeditions() {
             // Column spacing
             row.push((A::Left, vec![]));
@@ -163,7 +234,12 @@ fn render_hand(cards: &[Card]) -> Vec<N> {
 }
 
 pub fn card(c: &Card) -> N {
-    N::Bold(vec![N::Fg(c.expedition.color().into(), vec![N::text(c.to_string())])])
+    N::Bold(vec![
+        N::Fg(
+            c.expedition.color().into(),
+            vec![N::text(c.to_string())]
+        ),
+    ])
 }
 
 pub fn comma_cards(cards: &[Card]) -> Vec<N> {

@@ -39,20 +39,27 @@ impl Game {
     }
 
     pub fn play_parser(&self, player: usize) -> impl Parser<Command> {
-        Map::new(Chain2::new(Doc::name_desc("play",
-                                            "play a card to an expedition",
-                                            Token::new("play")),
-                             AfterSpace::new(self.player_card_parser(player, "the card to play"))),
-                 |(_, c)| Command::Play(c))
+        Map::new(
+            Chain2::new(
+                Doc::name_desc("play", "play a card to an expedition", Token::new("play")),
+                AfterSpace::new(self.player_card_parser(player, "the card to play")),
+            ),
+            |(_, c)| Command::Play(c),
+        )
     }
 
     pub fn discard_parser(&self, player: usize) -> impl Parser<Command> {
-        Map::new(Chain2::new(Doc::name_desc("discard",
-                                            "discard a card to the common discard piles",
-                                            Token::new("discard")),
-                             AfterSpace::new(self.player_card_parser(player,
-                                                                     "the card to discard"))),
-                 |(_, c)| Command::Discard(c))
+        Map::new(
+            Chain2::new(
+                Doc::name_desc(
+                    "discard",
+                    "discard a card to the common discard piles",
+                    Token::new("discard"),
+                ),
+                AfterSpace::new(self.player_card_parser(player, "the card to discard")),
+            ),
+            |(_, c)| Command::Discard(c),
+        )
     }
 
     pub fn player_card_parser(&self, player: usize, desc: &str) -> impl Parser<Card> {
@@ -64,21 +71,31 @@ impl Game {
 }
 
 pub fn draw_parser() -> impl Parser<Command> {
-    Doc::name_desc("draw",
-                   "draw a card from the draw pile",
-                   Map::new(Token::new("draw"), |_| Command::Draw))
+    Doc::name_desc(
+        "draw",
+        "draw a card from the draw pile",
+        Map::new(Token::new("draw"), |_| Command::Draw),
+    )
 }
 
 pub fn take_parser() -> impl Parser<Command> {
-    Map::new(Chain2::new(Doc::name_desc("take",
-                                        "take the top card from one of the common discard piles",
-                                        Token::new("take")),
-                         AfterSpace::new(expedition_parser())),
-             |(_, e)| Command::Take(e))
+    Map::new(
+        Chain2::new(
+            Doc::name_desc(
+                "take",
+                "take the top card from one of the common discard piles",
+                Token::new("take"),
+            ),
+            AfterSpace::new(expedition_parser()),
+        ),
+        |(_, e)| Command::Take(e),
+    )
 }
 
 pub fn expedition_parser() -> impl Parser<Expedition> {
-    Doc::name_desc("expedition",
-                   "the expedition to take from",
-                   Enum::exact(expeditions()))
+    Doc::name_desc(
+        "expedition",
+        "the expedition to take from",
+        Enum::exact(expeditions()),
+    )
 }
