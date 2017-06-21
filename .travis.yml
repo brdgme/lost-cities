@@ -3,7 +3,7 @@ rust: nightly
 before_deploy:
 - cargo build --release
 - mkdir lambda
-- cp target/release/lost-cities lambda/game
+- cp target/release/cli lambda/game
 - curl https://raw.githubusercontent.com/brdgme/lambda/master/index.js > lambda/index.js
 deploy:
   provider: lambda
