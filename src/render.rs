@@ -17,13 +17,9 @@ impl Renderer for PubState {
                         A::Center,
                         vec![
                             N::text("Round "),
-                            N::Bold(
-                                vec![N::text(format!("{}", self.round))]
-                            ),
+                            N::Bold(vec![N::text(format!("{}", self.round))]),
                             N::text(" of "),
-                            N::Bold(
-                                vec![N::text(format!("{}", super::ROUNDS))]
-                            ),
+                            N::Bold(vec![N::text(format!("{}", super::ROUNDS))]),
                         ]
                     ),
                 ],
@@ -37,12 +33,7 @@ impl Renderer for PubState {
                 vec![
                     (
                         A::Center,
-                        vec![
-                            N::Fg(
-                                GREY.into(),
-                                vec![N::text("Your hand")]
-                            ),
-                        ]
+                        vec![N::Fg(GREY.into(), vec![N::text("Your hand")])]
                     ),
                 ],
                 vec![(A::Center, render_hand(h))],
@@ -60,9 +51,7 @@ impl Renderer for PubState {
                 (A::Left, vec![N::text("  ")]),
                 (
                     A::Center,
-                    vec![
-                        N::Fg(GREY.into(), vec![N::text(format!("R{}", r))]),
-                    ]
+                    vec![N::Fg(GREY.into(), vec![N::text(format!("R{}", r))])]
                 ),
             ]);
         }
@@ -107,9 +96,7 @@ impl Renderer for PubState {
             vec![
                 (
                     A::Center,
-                    vec![
-                        N::Fg(GREY.into(), vec![N::text("Scores")]),
-                    ]
+                    vec![N::Fg(GREY.into(), vec![N::text("Scores")])]
                 ),
             ],
             vec![(A::Center, vec![N::Table(scores)])],
@@ -163,9 +150,7 @@ impl PubState {
                     GREY.into(),
                     vec![
                         N::text("   "),
-                        N::Bold(
-                            vec![N::text(format!("{}", self.deck_remaining))]
-                        ),
+                        N::Bold(vec![N::text(format!("{}", self.deck_remaining))]),
                         N::text(" left"),
                     ]
                 ),

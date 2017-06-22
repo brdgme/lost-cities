@@ -170,8 +170,7 @@ impl Game {
                     N::Player(p),
                     N::text(format!(
                         " won by {} points",
-                        scores.get(p).unwrap_or(&0) -
-                            scores.get(opponent(p)).unwrap_or(&0)
+                        scores.get(p).unwrap_or(&0) - scores.get(opponent(p)).unwrap_or(&0)
                     )),
                 ]
             }
@@ -242,13 +241,15 @@ impl Game {
                 ).into(),
             );
         }
-        if let Some(index) = self.discards.iter().rposition(
-            |&c| c.expedition == expedition,
-        )
+        if let Some(index) = self.discards
+            .iter()
+            .rposition(|&c| c.expedition == expedition)
         {
-            let c = *self.discards.get(index).ok_or_else(|| {
-                ErrorKind::Internal("could not find discard card".to_string())
-            })?;
+            let c = *self.discards
+                .get(index)
+                .ok_or_else(|| {
+                    ErrorKind::Internal("could not find discard card".to_string())
+                })?;
             self.hands
                 .get_mut(player)
                 .ok_or_else(|| {
@@ -260,11 +261,9 @@ impl Game {
             self.stats[player].takes += 1;
             self.stats[player].turns += 1;
             Ok(vec![
-                Log::public(vec![
-                    N::Player(player),
-                    N::text(" took "),
-                    render::card(&c),
-                ]),
+                Log::public(
+                    vec![N::Player(player), N::text(" took "), render::card(&c)]
+                ),
             ])
         } else {
             Err(
@@ -290,9 +289,9 @@ impl Game {
                 ErrorKind::Internal(format!("could not find player hand for player {}", player))
             })
             .and_then(|h| {
-                let index = h.iter().position(|hc| c == *hc).ok_or_else(|| {
-                    ErrorKind::InvalidInput(format!("you don't have {}", c))
-                })?;
+                let index = h.iter()
+                    .position(|hc| c == *hc)
+                    .ok_or_else(|| ErrorKind::InvalidInput(format!("you don't have {}", c)))?;
                 h.remove(index);
                 Ok(())
             })?;
@@ -324,9 +323,9 @@ impl Game {
                 ErrorKind::Internal(format!("could not find player hand for player {}", player))
             })
             .and_then(|h| {
-                h.iter().position(|hc| c == *hc).ok_or_else(|| {
-                    ErrorKind::InvalidInput(format!("you don't have {}", c))
-                })
+                h.iter()
+                    .position(|hc| c == *hc)
+                    .ok_or_else(|| ErrorKind::InvalidInput(format!("you don't have {}", c)))
             })?;
         Ok(())
     }
@@ -579,10 +578,10 @@ impl Gamer for Game {
         };
         match cp.parse(input, players) {
             Ok(ParseOutput {
-                   value: Command::Play(c),
-                   remaining,
-                   ..
-               }) => {
+                value: Command::Play(c),
+                remaining,
+                ..
+            }) => {
                 self.play(player, c).map(|l| {
                     CommandResponse {
                         logs: l,
@@ -592,10 +591,10 @@ impl Gamer for Game {
                 })
             }
             Ok(ParseOutput {
-                   value: Command::Discard(c),
-                   remaining,
-                   ..
-               }) => {
+                value: Command::Discard(c),
+                remaining,
+                ..
+            }) => {
                 self.discard(player, c).map(|l| {
                     CommandResponse {
                         logs: l,
@@ -605,10 +604,10 @@ impl Gamer for Game {
                 })
             }
             Ok(ParseOutput {
-                   value: Command::Take(e),
-                   remaining,
-                   ..
-               }) => {
+                value: Command::Take(e),
+                remaining,
+                ..
+            }) => {
                 self.take(player, e).map(|l| {
                     CommandResponse {
                         logs: l,
@@ -618,10 +617,10 @@ impl Gamer for Game {
                 })
             }
             Ok(ParseOutput {
-                   value: Command::Draw,
-                   remaining,
-                   ..
-               }) => {
+                value: Command::Draw,
+                remaining,
+                ..
+            }) => {
                 self.draw(player).map(|l| {
                     CommandResponse {
                         logs: l,
