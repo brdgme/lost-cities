@@ -13,6 +13,7 @@ mod command;
 mod render;
 
 use brdgme_game::{Gamer, Log, Status, CommandResponse, Stat};
+use brdgme_game::game::gen_placings;
 use brdgme_game::command::Spec as CommandSpec;
 use brdgme_game::command::parser::Output as ParseOutput;
 use brdgme_game::errors::*;
@@ -144,7 +145,7 @@ impl Game {
                 N::Bold(vec![N::text(format!("{}", round_score))]),
                 N::text(" points, now on "),
                 N::Bold(
-                    vec![N::text(format!("{}", self.player_score(p)))]
+                    vec![N::text(format!("{}", self.player_score(p)))],
                 ),
             ]));
         }
@@ -262,7 +263,7 @@ impl Game {
             self.stats[player].turns += 1;
             Ok(vec![
                 Log::public(
-                    vec![N::Player(player), N::text(" took "), render::card(&c)]
+                    vec![N::Player(player), N::text(" took "), render::card(&c)],
                 ),
             ])
         } else {
@@ -429,7 +430,7 @@ impl Game {
                 public_log.append(&mut vec![
                     N::text(", "),
                     N::Bold(
-                        vec![N::text(format!("{}", self.deck.len()))]
+                        vec![N::text(format!("{}", self.deck.len()))],
                     ),
                     N::text(" remaining"),
                 ]);
@@ -493,6 +494,27 @@ impl Game {
         );
         stats
     }
+
+    fn placings(&self) -> Vec<usize> {
+        gen_placings(
+            &[
+                vec![self.player_score(0) as i32],
+                vec![self.player_score(1) as i32],
+            ],
+        )
+    }
+
+    fn winners(&self) -> Vec<usize> {
+        self.placings()
+            .iter()
+            .enumerate()
+            .filter_map(|(player, place)| if *place == 1 {
+                Some(player)
+            } else {
+                None
+            })
+            .collect()
+    }
 }
 
 pub fn opponent(player: usize) -> usize {
@@ -519,17 +541,7 @@ impl Gamer for Game {
     fn status(&self) -> Status {
         if self.round >= START_ROUND + ROUNDS {
             Status::Finished {
-                winners: {
-                    let p0_score = self.player_score(0);
-                    let p1_score = self.player_score(1);
-                    if p0_score > p1_score {
-                        vec![0]
-                    } else if p1_score > p0_score {
-                        vec![1]
-                    } else {
-                        vec![0, 1]
-                    }
-                },
+                placings: self.placings(),
                 stats: vec![self.player_stats(0), self.player_stats(1)],
             }
         } else {

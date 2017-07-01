@@ -20,7 +20,7 @@ impl Renderer for PubState {
                             N::Bold(vec![N::text(format!("{}", self.round))]),
                             N::text(" of "),
                             N::Bold(vec![N::text(format!("{}", super::ROUNDS))]),
-                        ]
+                        ],
                     ),
                 ],
                 vec![],
@@ -33,7 +33,7 @@ impl Renderer for PubState {
                 vec![
                     (
                         A::Center,
-                        vec![N::Fg(GREY.into(), vec![N::text("Your hand")])]
+                        vec![N::Fg(GREY.into(), vec![N::text("Your hand")])],
                     ),
                 ],
                 vec![(A::Center, render_hand(h))],
@@ -51,7 +51,7 @@ impl Renderer for PubState {
                 (A::Left, vec![N::text("  ")]),
                 (
                     A::Center,
-                    vec![N::Fg(GREY.into(), vec![N::text(format!("R{}", r))])]
+                    vec![N::Fg(GREY.into(), vec![N::text(format!("R{}", r))])],
                 ),
             ]);
         }
@@ -59,7 +59,7 @@ impl Renderer for PubState {
             (A::Left, vec![N::text("  ")]),
             (
                 A::Center,
-                vec![N::Fg(GREY.into(), vec![N::text("Tot")])]
+                vec![N::Fg(GREY.into(), vec![N::text("Tot")])],
             ),
         ]);
         scores.push(header);
@@ -76,9 +76,9 @@ impl Renderer for PubState {
                                     .get(*p)
                                     .and_then(|s| s.get(r))
                                     .map(|rs| format!("{}", rs))
-                                    .unwrap_or_else(|| "".to_string())
+                                    .unwrap_or_else(|| "".to_string()),
                             ),
-                        ]
+                        ],
                     ),
                 ]);
             }
@@ -86,7 +86,7 @@ impl Renderer for PubState {
                 (A::Left, vec![]),
                 (
                     A::Center,
-                    vec![N::text(format!("{}", self.player_score(*p)))]
+                    vec![N::text(format!("{}", self.player_score(*p)))],
                 ),
             ]);
             scores.push(score_row);
@@ -96,7 +96,7 @@ impl Renderer for PubState {
             vec![
                 (
                     A::Center,
-                    vec![N::Fg(GREY.into(), vec![N::text("Scores")])]
+                    vec![N::Fg(GREY.into(), vec![N::text("Scores")])],
                 ),
             ],
             vec![(A::Center, vec![N::Table(scores)])],
@@ -125,7 +125,7 @@ impl PubState {
         let mut discards: Row = vec![
             (
                 A::Right,
-                vec![N::Fg(GREY.into(), vec![N::text("Discard ")])]
+                vec![N::Fg(GREY.into(), vec![N::text("Discard ")])],
             ),
         ];
         for e in expeditions() {
@@ -152,7 +152,7 @@ impl PubState {
                         N::text("   "),
                         N::Bold(vec![N::text(format!("{}", self.deck_remaining))]),
                         N::text(" left"),
-                    ]
+                    ],
                 ),
             ],
         ));
@@ -222,7 +222,7 @@ pub fn card(c: &Card) -> N {
     N::Bold(vec![
         N::Fg(
             c.expedition.color().into(),
-            vec![N::text(c.to_string())]
+            vec![N::text(c.to_string())],
         ),
     ])
 }
