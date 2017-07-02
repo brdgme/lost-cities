@@ -823,4 +823,15 @@ mod test {
             ])
         );
     }
+
+    #[test]
+    fn placings_works() {
+        let mut g = Game::new(2).expect("expected to create game").0;
+        g.scores = vec![vec![200, 0, 0], vec![100, 50, 40]];
+        assert_eq!(vec![1, 2], g.placings());
+        g.scores = vec![vec![100, 50, 40], vec![200, 0, 0]];
+        assert_eq!(vec![2, 1], g.placings());
+        g.scores = vec![vec![100, 50, 40], vec![100, 50, 40]];
+        assert_eq!(vec![1, 1], g.placings());
+    }
 }
