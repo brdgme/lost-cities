@@ -73,16 +73,21 @@ pub struct Game {
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct PubState {
-    pub player: Option<usize>,
     pub round: usize,
     pub is_finished: bool,
     pub phase: Phase,
     pub deck_remaining: usize,
     pub discards: HashMap<Expedition, Value>,
-    pub hand: Option<Vec<Card>>,
     pub scores: Vec<Vec<isize>>,
     pub expeditions: Vec<Vec<Card>>,
     pub current_player: usize,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct PlayerState {
+    pub public: PubState,
+    pub player: usize,
+    pub hand: Vec<Card>,
 }
 
 fn initial_deck() -> Vec<Card> {
@@ -100,10 +105,9 @@ fn initial_deck() -> Vec<Card> {
 
 impl Game {
     fn start_round(&mut self) -> Result<Vec<Log>> {
-        let mut logs: Vec<Log> =
-            vec![
-                Log::public(vec![N::text(format!("Starting round {}", self.round))]),
-            ];
+        let mut logs: Vec<Log> = vec![
+            Log::public(vec![N::text(format!("Starting round {}", self.round))]),
+        ];
         // Grab a new deck and shuffle it.
         let mut deck = initial_deck();
         thread_rng().shuffle(deck.as_mut_slice());
@@ -144,9 +148,7 @@ impl Game {
                 N::text(" scored "),
                 N::Bold(vec![N::text(format!("{}", round_score))]),
                 N::text(" points, now on "),
-                N::Bold(
-                    vec![N::text(format!("{}", self.player_score(p)))],
-                ),
+                N::Bold(vec![N::text(format!("{}", self.player_score(p)))]),
             ]));
         }
         if self.round < START_ROUND + ROUNDS {
@@ -262,9 +264,7 @@ impl Game {
             self.stats[player].takes += 1;
             self.stats[player].turns += 1;
             Ok(vec![
-                Log::public(
-                    vec![N::Player(player), N::text(" took "), render::card(&c)],
-                ),
+                Log::public(vec![N::Player(player), N::text(" took "), render::card(&c)]),
             ])
         } else {
             Err(
@@ -429,9 +429,7 @@ impl Game {
                 }
                 public_log.append(&mut vec![
                     N::text(", "),
-                    N::Bold(
-                        vec![N::text(format!("{}", self.deck.len()))],
-                    ),
+                    N::Bold(vec![N::text(format!("{}", self.deck.len()))]),
                     N::text(" remaining"),
                 ]);
                 logs.push(Log::public(public_log));
@@ -496,12 +494,10 @@ impl Game {
     }
 
     fn placings(&self) -> Vec<usize> {
-        gen_placings(
-            &[
-                vec![self.player_score(0) as i32],
-                vec![self.player_score(1) as i32],
-            ],
-        )
+        gen_placings(&[
+            vec![self.player_score(0) as i32],
+            vec![self.player_score(1) as i32],
+        ])
     }
 
     fn winners(&self) -> Vec<usize> {
@@ -523,6 +519,7 @@ pub fn opponent(player: usize) -> usize {
 
 impl Gamer for Game {
     type PubState = PubState;
+    type PlayerState = PlayerState;
 
     fn new(players: usize) -> Result<(Self, Vec<Log>)> {
         if players != PLAYERS {
@@ -552,12 +549,8 @@ impl Gamer for Game {
         }
     }
 
-    fn pub_state(&self, player: Option<usize>) -> Self::PubState {
+    fn pub_state(&self) -> Self::PubState {
         PubState {
-            player: match player {
-                Some(p) if p < 2 => Some(p),
-                _ => None,
-            },
             round: self.round,
             is_finished: self.is_finished(),
             phase: self.phase,
@@ -571,10 +564,17 @@ impl Gamer for Game {
                 }
                 d
             },
-            hand: player.and_then(|p| self.hands.get(p).cloned()),
             scores: self.scores.clone(),
             expeditions: self.expeditions.clone(),
             current_player: self.current_player,
+        }
+    }
+
+    fn player_state(&self, player: usize) -> Self::PlayerState {
+        PlayerState {
+            public: self.pub_state(),
+            player,
+            hand: self.hands[player].clone(),
         }
     }
 
