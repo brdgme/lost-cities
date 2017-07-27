@@ -1,7 +1,7 @@
 use brdgme_game::command::parser::*;
 use brdgme_game::Gamer;
 
-use card::{Card, Expedition, expeditions};
+use card::{expeditions, Card, Expedition};
 use Game;
 use Phase;
 

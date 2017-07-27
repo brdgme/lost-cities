@@ -1,11 +1,11 @@
 use std::cmp;
 
-use super::{PlayerState, PubState, opponent, START_ROUND, ROUNDS};
+use super::{opponent, PlayerState, PubState, ROUNDS, START_ROUND};
 use card::{by_expedition, expeditions, Card};
 
 use brdgme_color::GREY;
 use brdgme_game::Renderer;
-use brdgme_markup::{Node as N, Align as A, Row};
+use brdgme_markup::{Align as A, Node as N, Row};
 
 fn render(pub_state: &PubState, player: Option<usize>, hand: Option<&[Card]>) -> Vec<N> {
     let mut layout: Vec<Row> = vec![];

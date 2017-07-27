@@ -8,11 +8,11 @@ extern crate brdgme_game;
 extern crate brdgme_color;
 extern crate brdgme_markup;
 
-mod card;
+pub mod card;
 mod command;
 mod render;
 
-use brdgme_game::{Gamer, Log, Status, CommandResponse, Stat};
+use brdgme_game::{CommandResponse, Gamer, Log, Stat, Status};
 use brdgme_game::game::gen_placings;
 use brdgme_game::command::Spec as CommandSpec;
 use brdgme_game::command::parser::Output as ParseOutput;
@@ -22,7 +22,7 @@ use brdgme_markup::Node as N;
 use std::collections::HashMap;
 use std::default::Default;
 
-use card::{Card, Expedition, Value, expeditions};
+use card::{expeditions, Card, Expedition, Value};
 use rand::{thread_rng, Rng};
 use command::Command;
 
@@ -177,11 +177,9 @@ impl Game {
                     )),
                 ]
             }
-            _ => {
-                vec![
-                    N::text(format!("scores tied at {}", scores.first().unwrap_or(&0))),
-                ]
-            }
+            _ => vec![
+                N::text(format!("scores tied at {}", scores.first().unwrap_or(&0))),
+            ],
         });
         Log::public(vec![N::Bold(log_text)])
     }
@@ -357,16 +355,14 @@ impl Game {
                         )).into(),
                     );
                 }
-                Value::N(n) => {
-                    if n <= hn {
-                        return Err(
-                            ErrorKind::InvalidInput(format!(
-                                "you can't play {} as you've already played a higher card",
-                                c
-                            )).into(),
-                        );
-                    }
-                }
+                Value::N(n) => if n <= hn {
+                    return Err(
+                        ErrorKind::InvalidInput(format!(
+                            "you can't play {} as you've already played a higher card",
+                            c
+                        )).into(),
+                    );
+                },
             }
         }
         if self.expeditions
@@ -593,54 +589,46 @@ impl Gamer for Game {
                 value: Command::Play(c),
                 remaining,
                 ..
-            }) => {
-                self.play(player, c).map(|l| {
-                    CommandResponse {
-                        logs: l,
-                        can_undo: true,
-                        remaining_input: remaining.to_string(),
-                    }
-                })
-            }
+            }) => self.play(player, c).map(|l| {
+                CommandResponse {
+                    logs: l,
+                    can_undo: true,
+                    remaining_input: remaining.to_string(),
+                }
+            }),
             Ok(ParseOutput {
                 value: Command::Discard(c),
                 remaining,
                 ..
-            }) => {
-                self.discard(player, c).map(|l| {
-                    CommandResponse {
-                        logs: l,
-                        can_undo: true,
-                        remaining_input: remaining.to_string(),
-                    }
-                })
-            }
+            }) => self.discard(player, c).map(|l| {
+                CommandResponse {
+                    logs: l,
+                    can_undo: true,
+                    remaining_input: remaining.to_string(),
+                }
+            }),
             Ok(ParseOutput {
                 value: Command::Take(e),
                 remaining,
                 ..
-            }) => {
-                self.take(player, e).map(|l| {
-                    CommandResponse {
-                        logs: l,
-                        can_undo: true,
-                        remaining_input: remaining.to_string(),
-                    }
-                })
-            }
+            }) => self.take(player, e).map(|l| {
+                CommandResponse {
+                    logs: l,
+                    can_undo: true,
+                    remaining_input: remaining.to_string(),
+                }
+            }),
             Ok(ParseOutput {
                 value: Command::Draw,
                 remaining,
                 ..
-            }) => {
-                self.draw(player).map(|l| {
-                    CommandResponse {
-                        logs: l,
-                        can_undo: false,
-                        remaining_input: remaining.to_string(),
-                    }
-                })
-            }
+            }) => self.draw(player).map(|l| {
+                CommandResponse {
+                    logs: l,
+                    can_undo: false,
+                    remaining_input: remaining.to_string(),
+                }
+            }),
             Err(e) => Err(ErrorKind::InvalidInput(e.to_string()).into()),
         }
     }
