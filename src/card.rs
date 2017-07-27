@@ -113,3 +113,15 @@ pub fn last_expedition(cards: &[Card], expedition: Expedition) -> Option<Card> {
         .find(|c| c.expedition == expedition)
         .cloned()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cmp::Ordering;
+
+    #[test]
+    fn value_cmp_works() {
+        assert_eq!(Ordering::Less, Value::Investment.cmp(&Value::N(2)));
+        assert_eq!(Ordering::Less, Value::N(2).cmp(&Value::N(3)));
+    }
+}
