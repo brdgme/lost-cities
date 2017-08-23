@@ -16,10 +16,14 @@ fn render(pub_state: &PubState, player: Option<usize>, hand: Option<&[Card]>) ->
                     A::Center,
                     vec![
                         N::text("Round "),
-                        N::Bold(vec![N::text(format!("{}", pub_state.round))]),
+                        N::Bold(
+                            vec![N::text(format!("{}", pub_state.round))]
+                        ),
                         N::text(" of "),
-                        N::Bold(vec![N::text(format!("{}", super::ROUNDS))]),
-                    ],
+                        N::Bold(
+                            vec![N::text(format!("{}", super::ROUNDS))]
+                        ),
+                    ]
                 ),
             ],
             vec![],
@@ -32,7 +36,12 @@ fn render(pub_state: &PubState, player: Option<usize>, hand: Option<&[Card]>) ->
             vec![
                 (
                     A::Center,
-                    vec![N::Fg(GREY.into(), vec![N::text("Your hand")])],
+                    vec![
+                        N::Fg(
+                            GREY.into(),
+                            vec![N::text("Your hand")]
+                        ),
+                    ]
                 ),
             ],
             vec![(A::Center, render_hand(h))],
@@ -50,13 +59,18 @@ fn render(pub_state: &PubState, player: Option<usize>, hand: Option<&[Card]>) ->
             (A::Left, vec![N::text("  ")]),
             (
                 A::Center,
-                vec![N::Fg(GREY.into(), vec![N::text(format!("R{}", r))])],
+                vec![
+                    N::Fg(GREY.into(), vec![N::text(format!("R{}", r))]),
+                ]
             ),
         ]);
     }
     header.extend(vec![
         (A::Left, vec![N::text("  ")]),
-        (A::Center, vec![N::Fg(GREY.into(), vec![N::text("Tot")])]),
+        (
+            A::Center,
+            vec![N::Fg(GREY.into(), vec![N::text("Tot")])]
+        ),
     ]);
     scores.push(header);
     for p in &[persp, opponent(persp)] {
@@ -73,9 +87,9 @@ fn render(pub_state: &PubState, player: Option<usize>, hand: Option<&[Card]>) ->
                                 .get(*p)
                                 .and_then(|s| s.get(r))
                                 .map(|rs| format!("{}", rs))
-                                .unwrap_or_else(|| "".to_string()),
+                                .unwrap_or_else(|| "".to_string())
                         ),
-                    ],
+                    ]
                 ),
             ]);
         }
@@ -83,7 +97,7 @@ fn render(pub_state: &PubState, player: Option<usize>, hand: Option<&[Card]>) ->
             (A::Left, vec![]),
             (
                 A::Center,
-                vec![N::text(format!("{}", pub_state.player_score(*p)))],
+                vec![N::text(format!("{}", pub_state.player_score(*p)))]
             ),
         ]);
         scores.push(score_row);
@@ -91,7 +105,12 @@ fn render(pub_state: &PubState, player: Option<usize>, hand: Option<&[Card]>) ->
     layout.append(&mut vec![
         vec![],
         vec![
-            (A::Center, vec![N::Fg(GREY.into(), vec![N::text("Scores")])]),
+            (
+                A::Center,
+                vec![
+                    N::Fg(GREY.into(), vec![N::text("Scores")]),
+                ]
+            ),
         ],
         vec![(A::Center, vec![N::Table(scores)])],
     ]);
@@ -130,7 +149,7 @@ impl PubState {
         let mut discards: Row = vec![
             (
                 A::Right,
-                vec![N::Fg(GREY.into(), vec![N::text("Discard ")])],
+                vec![N::Fg(GREY.into(), vec![N::text("Discard ")])]
             ),
         ];
         for e in expeditions() {
@@ -155,9 +174,11 @@ impl PubState {
                     GREY.into(),
                     vec![
                         N::text("   "),
-                        N::Bold(vec![N::text(format!("{}", self.deck_remaining))]),
+                        N::Bold(
+                            vec![N::text(format!("{}", self.deck_remaining))]
+                        ),
                         N::text(" left"),
-                    ],
+                    ]
                 ),
             ],
         ));
@@ -225,7 +246,10 @@ fn render_hand(cards: &[Card]) -> Vec<N> {
 
 pub fn card(c: &Card) -> N {
     N::Bold(vec![
-        N::Fg(c.expedition.color().into(), vec![N::text(c.to_string())]),
+        N::Fg(
+            c.expedition.color().into(),
+            vec![N::text(c.to_string())]
+        ),
     ])
 }
 

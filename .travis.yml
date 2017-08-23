@@ -7,7 +7,7 @@ before_deploy:
 - curl https://raw.githubusercontent.com/brdgme/lambda/master/index.js > lambda/index.js
 deploy:
   provider: lambda
-  function_name: lost-cities
+  function_name: lost-cities-2
   region: us-west-2
   role: arn:aws:iam::161480335654:role/brdgme-game
   runtime: "nodejs4.3"
