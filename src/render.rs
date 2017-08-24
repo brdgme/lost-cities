@@ -190,6 +190,10 @@ impl PubState {
 
         // Blank row
         rows.push(vec![]);
+        if self.players > 2 {
+            // Some extra space for 3 players as it gets a bit busy.
+            rows.push(vec![]);
+        }
 
         // Discards
         let mut discards: Row = vec![
@@ -237,6 +241,10 @@ impl PubState {
 
         // Blank row
         rows.push(vec![]);
+        if self.players > 2 {
+            // Some extra space for 3 players as it gets a bit busy.
+            rows.push(vec![]);
+        }
 
         // Bottom half
         if let Some(e) = self.expeditions.get(p) {
