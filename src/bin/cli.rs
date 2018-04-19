@@ -1,11 +1,16 @@
 extern crate brdgme_cmd;
 extern crate lost_cities;
 
-use lost_cities::Game;
 use brdgme_cmd::cli::cli;
+use brdgme_cmd::requester;
+use lost_cities::Game;
 
 use std::io;
 
 fn main() {
-    cli::<Game, _, _>(io::stdin(), &mut io::stdout());
+    cli(
+        &mut requester::gamer::new::<Game>(),
+        io::stdin(),
+        &mut io::stdout(),
+    );
 }
