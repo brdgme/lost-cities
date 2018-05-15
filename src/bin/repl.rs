@@ -3,7 +3,8 @@ extern crate lost_cities;
 
 use lost_cities::Game;
 use brdgme_cmd::repl;
+use brdgme_cmd::requester;
 
 fn main() {
-    repl::<Game>();
+    repl(&mut requester::gamer::new::<Game>());
 }
