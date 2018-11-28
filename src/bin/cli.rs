@@ -1,6 +1,3 @@
-extern crate brdgme_cmd;
-extern crate lost_cities;
-
 use brdgme_cmd::cli::cli;
 use brdgme_cmd::requester;
 use lost_cities::Game;

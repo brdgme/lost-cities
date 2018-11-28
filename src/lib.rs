@@ -1,14 +1,9 @@
-extern crate rand;
-#[macro_use]
-extern crate serde_derive;
-
-extern crate brdgme_color;
-extern crate brdgme_game;
-extern crate brdgme_markup;
-
 pub mod card;
 mod command;
 mod render;
+
+use serde_derive::{Serialize, Deserialize};
+use rand::{thread_rng, Rng};
 
 use brdgme_game::command::parser::Output as ParseOutput;
 use brdgme_game::command::Spec as CommandSpec;
@@ -20,9 +15,8 @@ use brdgme_markup::Node as N;
 use std::collections::{HashMap, HashSet};
 use std::default::Default;
 
-use card::{expeditions, Card, Expedition, Value};
-use command::Command;
-use rand::{thread_rng, Rng};
+use crate::card::{expeditions, Card, Expedition, Value};
+use crate::command::Command;
 
 const INVESTMENTS: usize = 3;
 pub const ROUNDS: usize = 3;

@@ -1,9 +1,9 @@
 use brdgme_game::command::parser::*;
 use brdgme_game::Gamer;
 
-use card::{expeditions, Card, Expedition};
-use Game;
-use Phase;
+use crate::card::{expeditions, Card, Expedition};
+use crate::Game;
+use crate::Phase;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Command {
